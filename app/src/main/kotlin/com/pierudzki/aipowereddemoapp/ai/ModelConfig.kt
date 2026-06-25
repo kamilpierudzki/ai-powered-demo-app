@@ -7,7 +7,7 @@ package com.pierudzki.aipowereddemoapp.ai
  * device with `adb` (see project plan). For production it should be downloaded at runtime instead.
  */
 object ModelConfig {
-    const val MODEL_FILE_NAME = "gemma3-1b-it-int4.task"
+    const val MODEL_FILE_NAME = "gemma-4-E4B-it.litertlm"
     const val MODEL_PATH = "/data/local/tmp/llm/$MODEL_FILE_NAME"
 
     const val SYSTEM_PROMPT =

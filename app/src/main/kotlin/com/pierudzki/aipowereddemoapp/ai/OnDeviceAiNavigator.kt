@@ -1,86 +1,80 @@
 package com.pierudzki.aipowereddemoapp.ai
 
 import android.content.Context
-import com.google.ai.edge.localagents.core.proto.Content
-import com.google.ai.edge.localagents.core.proto.Part
-import com.google.ai.edge.localagents.fc.GemmaFormatter
-import com.google.ai.edge.localagents.fc.GenerativeModel
-import com.google.ai.edge.localagents.fc.LlmInferenceBackend
-import com.google.mediapipe.tasks.genai.llminference.LlmInference
-import com.google.mediapipe.tasks.genai.llminference.LlmInference.LlmInferenceOptions
+import com.google.ai.edge.litertlm.Backend
+import com.google.ai.edge.litertlm.Content
+import com.google.ai.edge.litertlm.ConversationConfig
+import com.google.ai.edge.litertlm.Contents
+import com.google.ai.edge.litertlm.Engine
+import com.google.ai.edge.litertlm.EngineConfig
+import com.google.ai.edge.litertlm.SamplerConfig
+import com.google.ai.edge.litertlm.tool
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
- * Initial on-device configuration of a generative model with function calling (AI Edge FC SDK +
- * MediaPipe LLM Inference). Given free-form user input it lets the model decide which screen to
- * switch to via the `navigateToScreen` tool, and reports the choice as an [AiNavigationDecision].
+ * On-device navigator backed by LiteRT-LM (Engine/Conversation) running `gemma-4-E4B-it.litertlm`.
+ * Given free-form user input it lets the model decide which screen to switch to via the
+ * `navigateToScreen` tool, and reports the choice as an [AiNavigationDecision].
  *
- * This class only produces a decision; performing the actual navigation is left to the caller.
+ * Tool calling is manual (`automaticToolCalling = false`): this class only produces a decision;
+ * performing the actual navigation is left to the caller (UI/navigation layer).
  */
 class OnDeviceAiNavigator(
     private val context: Context,
     private val modelPath: String = ModelConfig.MODEL_PATH,
 ) {
 
-    private var llmInference: LlmInference? = null
-    private var generativeModel: GenerativeModel? = null
+    private var engine: Engine? = null
 
     /** Whether the model file has been provisioned on the device (see ModelConfig for the path). */
     fun isModelAvailable(): Boolean = File(modelPath).exists()
 
-    /** Loads the model and wires up the system prompt and the navigation tool. */
-    fun initialize() {
-        val options = LlmInferenceOptions.builder()
-            .setModelPath(modelPath)
-            .build()
-        val inference = LlmInference.createFromOptions(context, options)
-        val backend = LlmInferenceBackend(inference, GemmaFormatter())
-
-        val systemInstruction = Content.newBuilder()
-            .setRole("system")
-            .addParts(Part.newBuilder().setText(ModelConfig.SYSTEM_PROMPT))
-            .build()
-
-        llmInference = inference
-        generativeModel = GenerativeModel(
-            backend,
-            systemInstruction,
-            listOf(buildNavigationTool()),
+    /** Loads the model. Heavy operation - always call off the main thread. */
+    suspend fun initialize() = withContext(Dispatchers.IO) {
+        val config = EngineConfig(
+            modelPath = modelPath,
+            backend = Backend.GPU(), // devices without GPU: Backend.CPU()
+            cacheDir = context.cacheDir.path, // /data/local/tmp may not be writable by the app
         )
+        engine = Engine(config).also { it.initialize() }
     }
 
     /** Runs a single turn and maps the model output to a typed decision. */
     suspend fun decide(userInput: String): AiNavigationDecision = withContext(Dispatchers.IO) {
-        val model = generativeModel ?: error("Wywolaj initialize() przed decide()")
-        val chat = model.startChat()
-        // Tylko Gemma: tutaj mozna wlaczyc constrained decoding, aby wymusic wylacznie wywolania narzedzi.
-        val response = chat.sendMessage(userInput)
+        val activeEngine = engine ?: error("Wywolaj initialize() przed decide()")
+        activeEngine.createConversation(
+            ConversationConfig(
+                systemInstruction = Contents.of(ModelConfig.SYSTEM_PROMPT),
+                tools = listOf(tool(NavigationToolSet())),
+                automaticToolCalling = false,
+//                samplerConfig = SamplerConfig(...) // tutaj parametr
+            ),
+        ).use { conversation ->
+            val response = conversation.sendMessage(userInput)
+            val toolCall = response.toolCalls.firstOrNull()
+            val text = response.contents.contents
+                .filterIsInstance<Content.Text>()
+                .joinToString("") { it.text }
+                .trim()
+            when {
+                toolCall != null -> {
+                    val destinationId = toolCall.arguments["destination"]?.toString().orEmpty()
+                    AppDestination.fromId(destinationId)
+                        ?.let { AiNavigationDecision.Navigate(it) }
+                        ?: AiNavigationDecision.Unknown(destinationId)
+                }
 
-        if (response.candidatesCount == 0 || response.getCandidates(0).content.partsList.isEmpty()) {
-            return@withContext AiNavigationDecision.Unknown(response.toString())
-        }
-
-        val message = response.getCandidates(0).content.getParts(0)
-        when {
-            message.hasFunctionCall() -> {
-                val functionCall = message.functionCall
-                val destinationId = functionCall.args.fieldsMap["destination"]?.stringValue.orEmpty()
-                AppDestination.fromId(destinationId)
-                    ?.let { AiNavigationDecision.Navigate(it) }
-                    ?: AiNavigationDecision.Unknown(destinationId)
+                text.isNotEmpty() -> AiNavigationDecision.Message(text)
+                else -> AiNavigationDecision.Unknown(response.toString())
             }
-
-            message.hasText() -> AiNavigationDecision.Message(message.text)
-            else -> AiNavigationDecision.Unknown(response.toString())
         }
     }
 
-    /** Releases native resources held by the underlying inference engine. */
+    /** Releases native resources held by the engine. */
     fun close() {
-        generativeModel = null
-        llmInference?.close()
-        llmInference = null
+        engine?.close()
+        engine = null
     }
 }

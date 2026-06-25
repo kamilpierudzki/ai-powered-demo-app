@@ -1,36 +1,22 @@
 package com.pierudzki.aipowereddemoapp.ai
 
-import com.google.ai.edge.localagents.core.proto.FunctionDeclaration
-import com.google.ai.edge.localagents.core.proto.Schema
-import com.google.ai.edge.localagents.core.proto.Tool
-import com.google.ai.edge.localagents.core.proto.Type
+import com.google.ai.edge.litertlm.Tool
+import com.google.ai.edge.litertlm.ToolParam
+import com.google.ai.edge.litertlm.ToolSet
 
 /**
- * Builds the single `navigateToScreen` tool exposed to the model. The model calls it with a
- * `destination` argument chosen from [AppDestination] ids; the navigator maps that back to a
- * typed [AiNavigationDecision].
+ * Single tool exposed to the model. LiteRT-LM turns the [Tool]/[ToolParam] annotations and the
+ * function signature into an OpenAPI-style schema so the model knows when to call `navigateToScreen`.
+ *
+ * Note: with `automaticToolCalling = false` (see [OnDeviceAiNavigator]) the framework does NOT
+ * invoke this body - we read the tool call manually and map it to an [AiNavigationDecision]. The
+ * body is kept trivial and only matters if automatic tool calling is enabled later.
  */
-internal fun buildNavigationTool(): Tool {
-    val allowedDestinations = AppDestination.entries.joinToString(", ") { "${it.id} (${it.description})" }
+class NavigationToolSet : ToolSet {
 
-    val navigateToScreen = FunctionDeclaration.newBuilder()
-        .setName("navigateToScreen")
-        .setDescription("Przelacza aplikacje na wskazany ekran.")
-        .setParameters(
-            Schema.newBuilder()
-                .setType(Type.OBJECT)
-                .putProperties(
-                    "destination",
-                    Schema.newBuilder()
-                        .setType(Type.STRING)
-                        .setDescription("Identyfikator ekranu docelowego. Dozwolone wartosci: $allowedDestinations")
-                        .build(),
-                )
-                .build(),
-        )
-        .build()
-
-    return Tool.newBuilder()
-        .addFunctionDeclarations(navigateToScreen)
-        .build()
+    @Tool(description = "Przelacza aplikacje na wskazany ekran.")
+    fun navigateToScreen(
+        @ToolParam(description = "Identyfikator ekranu docelowego. Dozwolone wartosci: welcome, params, calculation, success")
+        destination: String,
+    ): Map<String, Any> = mapOf("destination" to destination)
 }
