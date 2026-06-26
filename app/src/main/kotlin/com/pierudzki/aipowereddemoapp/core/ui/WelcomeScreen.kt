@@ -92,21 +92,18 @@ fun WelcomeScreen(
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(hintText)
-                Row {
-                    TextField(
-                        value = selectedLanguage,
-                        onValueChange = { selectedLanguage = it },
-                        enabled = isEditingEnabled,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Button(
-                        onClick = {
-                            onSubmitLanguageClicked(selectedLanguage)
-                        },
-                        enabled = isEditingEnabled,
-                    ) {
-                        Text(submitButtonText)
-                    }
+                TextField(
+                    value = selectedLanguage,
+                    onValueChange = { selectedLanguage = it },
+                    enabled = isEditingEnabled,
+                )
+                Button(
+                    onClick = {
+                        onSubmitLanguageClicked(selectedLanguage)
+                    },
+                    enabled = isEditingEnabled,
+                ) {
+                    Text(submitButtonText)
                 }
             }
 
