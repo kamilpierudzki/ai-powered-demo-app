@@ -26,8 +26,9 @@ class WelcomeScreenLanguageSelectionHintPrompt : Prompt<String> {
             Your response should contain only the proposed text.
         """.trimIndent()
 
-    private val userPrompt: String =
-        """
+    private val userPrompt: String
+        get() =
+            """
             Suggest hint text.
         """.trimIndent()
 
