@@ -7,6 +7,7 @@ import com.pierudzki.aipowereddemoapp.ai.EngineState
 import com.pierudzki.aipowereddemoapp.ai.EngineWrapper
 import com.pierudzki.aipowereddemoapp.ai.prompts.WelcomeScreenButtonTextPrompt
 import com.pierudzki.aipowereddemoapp.ai.prompts.WelcomeScreenLanguageSelectionHintPrompt
+import com.pierudzki.aipowereddemoapp.ai.prompts.WelcomeScreenSubmitButtonTextPrompt
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel.UiState.Info
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel.UiState.Initializing
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel.UiState.ModelUnavailable
@@ -37,6 +38,7 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
         data class Ready(
             val startButtonText: String,
             val languageSelectionHint: String,
+            val submitButtonText: String,
             val loadingTexts: Boolean,
             override val modelName: String,
             override val appLanguage: String,
@@ -49,12 +51,15 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
         ) : UiState
     }
 
-    private var startButtonText: String = "Loading..."
+    private var lastStartButtonText: String = "Loading..."
     private var startButtonTextLoading: Boolean = false
-    private var languageSelectionHint: String = "Loading..."
+    private var lastLanguageSelectionHint: String = "Loading..."
     private var languageSelectionHintLoading: Boolean = false
+    private var lastSubmitButtonText: String = "Loading..."
+    private var submitButtonTextLoading: Boolean = false
     private val buttonTextPrompt = WelcomeScreenButtonTextPrompt()
     private val languageSelectionHintPrompt = WelcomeScreenLanguageSelectionHintPrompt()
+    private val submitButtonTextPrompt = WelcomeScreenSubmitButtonTextPrompt()
 
     private val _uiState = MutableStateFlow<UiState>(
         Initializing(
@@ -107,6 +112,7 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
         viewModelScope.launch {
             refreshButtonText()
             refreshLanguageSelectionHint()
+            refreshSubmitButtonText()
         }
     }
 
@@ -120,7 +126,7 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
 
                 is Prompt.Status.Ready<*> -> {
                     startButtonTextLoading = false
-                    startButtonText = status.value as String
+                    lastStartButtonText = status.value as String
                     _uiState.value = buildReadyState()
                 }
             }
@@ -137,7 +143,24 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
 
                 is Prompt.Status.Ready<*> -> {
                     languageSelectionHintLoading = false
-                    languageSelectionHint = status.value as String
+                    lastLanguageSelectionHint = status.value as String
+                    _uiState.value = buildReadyState()
+                }
+            }
+        }
+    }
+
+    private suspend fun refreshSubmitButtonText() {
+        submitButtonTextPrompt.execute().collect { status ->
+            when (status) {
+                is Prompt.Status.Processing -> {
+                    submitButtonTextLoading = true
+                    _uiState.value = buildReadyState()
+                }
+
+                is Prompt.Status.Ready<*> -> {
+                    submitButtonTextLoading = false
+                    lastSubmitButtonText = status.value as String
                     _uiState.value = buildReadyState()
                 }
             }
@@ -145,8 +168,9 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
     }
 
     private fun buildReadyState() = Ready(
-        startButtonText = startButtonText,
-        languageSelectionHint = languageSelectionHint,
+        startButtonText = lastStartButtonText,
+        languageSelectionHint = lastLanguageSelectionHint,
+        submitButtonText = lastSubmitButtonText,
         loadingTexts = startButtonTextLoading || languageSelectionHintLoading,
         modelName = EngineWrapper.state.value.modelName,
         appLanguage = EngineWrapper.state.value.appLanguage,

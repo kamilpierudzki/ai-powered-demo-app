@@ -42,6 +42,7 @@ fun WelcomeScreen(
     var selectedLanguage by remember { mutableStateOf(state.appLanguage) }
     var isEditingEnabled by remember { mutableStateOf(false) }
     var hintText by remember { mutableStateOf("") }
+    var submitButtonText by remember { mutableStateOf("") }
 
     LaunchedEffect(state) {
         isEditingEnabled =
@@ -52,6 +53,7 @@ fun WelcomeScreen(
 
         if (state is WelcomeScreenViewModel.UiState.Ready) {
             hintText = state.languageSelectionHint
+            submitButtonText = state.submitButtonText
         }
     }
 
@@ -107,7 +109,7 @@ fun WelcomeScreen(
                         },
                         enabled = isEditingEnabled,
                     ) {
-                        Text("Submit")
+                        Text(submitButtonText)
                     }
                 }
             }
