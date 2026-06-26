@@ -48,6 +48,7 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
     }
 
     private var startButtonText: String = ""
+    private val welcomeScreenButtonTextPrompt = WelcomeScreenButtonTextPrompt()
 
     private val _uiState = MutableStateFlow<UiState>(
         Initializing(
@@ -98,7 +99,7 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
 
     private fun refreshButtonText() {
         viewModelScope.launch {
-            WelcomeScreenButtonTextPrompt().execute().collect { status ->
+            welcomeScreenButtonTextPrompt.execute().collect { status ->
                 when (status) {
                     is Prompt.Status.Processing -> {
                         startButtonText = "Loading..."
