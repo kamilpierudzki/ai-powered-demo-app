@@ -41,13 +41,18 @@ fun WelcomeScreen(
 ) {
     var selectedLanguage by remember { mutableStateOf(state.appLanguage) }
     var isEditingEnabled by remember { mutableStateOf(false) }
+    var hintText by remember { mutableStateOf("") }
 
     LaunchedEffect(state) {
         isEditingEnabled =
-            (state as? WelcomeScreenViewModel.UiState.Ready)?.startButtonTextLoading != true &&
+            (state as? WelcomeScreenViewModel.UiState.Ready)?.loadingTexts != true &&
                     state !is WelcomeScreenViewModel.UiState.Info &&
                     state !is WelcomeScreenViewModel.UiState.ModelUnavailable &&
                     state !is WelcomeScreenViewModel.UiState.Initializing
+
+        if (state is WelcomeScreenViewModel.UiState.Ready) {
+            hintText = state.languageSelectionHint
+        }
     }
 
     Scaffold(
@@ -88,7 +93,7 @@ fun WelcomeScreen(
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Choose language for the app:")
+                Text(hintText)
                 Row {
                     TextField(
                         value = selectedLanguage,
@@ -115,9 +120,9 @@ fun WelcomeScreen(
                     Box(contentAlignment = Alignment.Center) {
                         Text(
                             text = state.startButtonText,
-                            modifier = Modifier.alpha(if (state.startButtonTextLoading) 0f else 1f),
+                            modifier = Modifier.alpha(if (state.loadingTexts) 0f else 1f),
                         )
-                        if (state.startButtonTextLoading) {
+                        if (state.loadingTexts) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(18.dp),
                                 strokeWidth = 2.dp,
@@ -129,79 +134,4 @@ fun WelcomeScreen(
             }
         }
     }
-}
-
-@Preview
-@Composable
-private fun WelcomeScreenPrev1() {
-    WelcomeScreen(
-        state = WelcomeScreenViewModel.UiState.ModelUnavailable(
-            modelName = "Model name",
-            appLanguage = "english",
-        ),
-        onSubmitLanguageClicked = {},
-        onStartClicked = {},
-        modifier = Modifier
-    )
-}
-
-@Preview
-@Composable
-private fun WelcomeScreenPrev2() {
-    WelcomeScreen(
-        state = WelcomeScreenViewModel.UiState.Initializing(
-            modelName = "Model name",
-            appLanguage = "english",
-        ),
-        onSubmitLanguageClicked = {},
-        onStartClicked = {},
-        modifier = Modifier
-    )
-}
-
-@Preview
-@Composable
-private fun WelcomeScreenPrev3() {
-    WelcomeScreen(
-        state = WelcomeScreenViewModel.UiState.Ready(
-            startButtonTextLoading = true,
-            startButtonText = "loading",
-            modelName = "Model name",
-            appLanguage = "english"
-        ),
-        onSubmitLanguageClicked = {},
-        onStartClicked = {},
-        modifier = Modifier
-    )
-}
-
-@Preview
-@Composable
-private fun WelcomeScreenPrev4() {
-    WelcomeScreen(
-        state = WelcomeScreenViewModel.UiState.Ready(
-            startButtonTextLoading = false,
-            startButtonText = "go to the next page",
-            modelName = "Model name",
-            appLanguage = "english"
-        ),
-        onSubmitLanguageClicked = {},
-        onStartClicked = {},
-        modifier = Modifier
-    )
-}
-
-@Preview
-@Composable
-private fun WelcomeScreenPrev5() {
-    WelcomeScreen(
-        state = WelcomeScreenViewModel.UiState.Info(
-            text = "something went wrong!",
-            modelName = "Model name",
-            appLanguage = "english"
-        ),
-        onSubmitLanguageClicked = {},
-        onStartClicked = {},
-        modifier = Modifier
-    )
 }

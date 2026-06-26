@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.pierudzki.aipowereddemoapp.ai.EngineState
 import com.pierudzki.aipowereddemoapp.ai.EngineWrapper
 import com.pierudzki.aipowereddemoapp.ai.prompts.WelcomeScreenButtonTextPrompt
+import com.pierudzki.aipowereddemoapp.ai.prompts.WelcomeScreenLanguageSelectionHintPrompt
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel.UiState.Info
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel.UiState.Initializing
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel.UiState.ModelUnavailable
@@ -34,8 +35,9 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
         ) : UiState
 
         data class Ready(
-            val startButtonTextLoading: Boolean,
             val startButtonText: String,
+            val languageSelectionHint: String,
+            val loadingTexts: Boolean,
             override val modelName: String,
             override val appLanguage: String,
         ) : UiState
@@ -47,8 +49,12 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
         ) : UiState
     }
 
-    private var startButtonText: String = ""
-    private val welcomeScreenButtonTextPrompt = WelcomeScreenButtonTextPrompt()
+    private var startButtonText: String = "Loading..."
+    private var startButtonTextLoading: Boolean = false
+    private var languageSelectionHint: String = "Loading..."
+    private var languageSelectionHintLoading: Boolean = false
+    private val buttonTextPrompt = WelcomeScreenButtonTextPrompt()
+    private val languageSelectionHintPrompt = WelcomeScreenLanguageSelectionHintPrompt()
 
     private val _uiState = MutableStateFlow<UiState>(
         Initializing(
@@ -70,7 +76,7 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
                     }
 
                     is EngineState.Ready -> {
-                        refreshButtonText()
+                        refreshTexts()
                     }
 
                     is EngineState.Info -> {
@@ -94,34 +100,55 @@ class WelcomeScreenViewModel(application: Application) : AndroidViewModel(applic
 
     fun onAppLanguageUpdated(language: String) {
         EngineWrapper.appLanguage = language
-        refreshButtonText()
+        refreshTexts()
     }
 
-    private fun refreshButtonText() {
+    private fun refreshTexts() {
         viewModelScope.launch {
-            welcomeScreenButtonTextPrompt.execute().collect { status ->
-                when (status) {
-                    is Prompt.Status.Processing -> {
-                        startButtonText = "Loading..."
-                        _uiState.value = Ready(
-                            startButtonTextLoading = true,
-                            startButtonText = startButtonText,
-                            modelName = EngineWrapper.state.value.modelName,
-                            appLanguage = EngineWrapper.state.value.appLanguage,
-                        )
-                    }
+            refreshButtonText()
+            refreshLanguageSelectionHint()
+        }
+    }
 
-                    is Prompt.Status.Ready<*> -> {
-                        startButtonText = status.value as String
-                        _uiState.value = Ready(
-                            startButtonTextLoading = false,
-                            startButtonText = status.value.toString(),
-                            modelName = EngineWrapper.state.value.modelName,
-                            appLanguage = EngineWrapper.state.value.appLanguage,
-                        )
-                    }
+    private suspend fun refreshButtonText() {
+        buttonTextPrompt.execute().collect { status ->
+            when (status) {
+                is Prompt.Status.Processing -> {
+                    startButtonTextLoading = true
+                    _uiState.value = buildReadyState()
+                }
+
+                is Prompt.Status.Ready<*> -> {
+                    startButtonTextLoading = false
+                    startButtonText = status.value as String
+                    _uiState.value = buildReadyState()
                 }
             }
         }
     }
+
+    private suspend fun refreshLanguageSelectionHint() {
+        languageSelectionHintPrompt.execute().collect { status ->
+            when (status) {
+                is Prompt.Status.Processing -> {
+                    languageSelectionHintLoading = true
+                    _uiState.value = buildReadyState()
+                }
+
+                is Prompt.Status.Ready<*> -> {
+                    languageSelectionHintLoading = false
+                    languageSelectionHint = status.value as String
+                    _uiState.value = buildReadyState()
+                }
+            }
+        }
+    }
+
+    private fun buildReadyState() = Ready(
+        startButtonText = startButtonText,
+        languageSelectionHint = languageSelectionHint,
+        loadingTexts = startButtonTextLoading || languageSelectionHintLoading,
+        modelName = EngineWrapper.state.value.modelName,
+        appLanguage = EngineWrapper.state.value.appLanguage,
+    )
 }

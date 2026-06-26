@@ -12,14 +12,14 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 
-class WelcomeScreenButtonTextPrompt : Prompt<String> {
+class WelcomeScreenLanguageSelectionHintPrompt : Prompt<String> {
 
     private val systemPrompt: String
         get() =
             """
-            You're managing a mobile app for Android. Suggest a button text on the app's home screen.
-            Clicking the button takes the user to a configuration screen for the calculation parameters
-            the app will perform in the next steps. The text must be a maximum of 5 words.
+            You manage an Android mobile app. Suggest a hint text for the text field where users
+            enter the language they want the app to use.
+            The hint text can contain a maximum of 10 words.
             
             User wants the text in the following language: "${EngineWrapper.appLanguage}".
             
@@ -28,13 +28,13 @@ class WelcomeScreenButtonTextPrompt : Prompt<String> {
 
     private val userPrompt: String =
         """
-            Propose a button text.
+            Suggest hint text.
         """.trimIndent()
 
     private val creativeConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = 1.0)
 
     override suspend fun execute(): Flow<Prompt.Status> = flow {
-        android.util.Log.d("test123", "WelcomeScreenButtonTextPrompt.execute() called")
+        android.util.Log.d("test123", "WelcomeScreenLanguageSelectionHintPrompt.execute() called")
         emit(Prompt.Status.Processing)
 
         val activeEngine = EngineWrapper.engine ?: run {
