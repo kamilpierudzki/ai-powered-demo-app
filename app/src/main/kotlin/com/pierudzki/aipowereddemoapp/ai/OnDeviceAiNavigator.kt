@@ -5,6 +5,7 @@ import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Contents
+import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.SamplerConfig
@@ -21,28 +22,14 @@ import java.io.File
  * Tool calling is manual (`automaticToolCalling = false`): this class only produces a decision;
  * performing the actual navigation is left to the caller (UI/navigation layer).
  */
+@Deprecated("use EngineWrapper")
 class OnDeviceAiNavigator(
     private val context: Context,
     private val modelPath: String = ModelConfig.MODEL_PATH,
 ) {
 
-    private var engine: Engine? = null
-
-    /** Whether the model file has been provisioned on the device (see ModelConfig for the path). */
-    fun isModelAvailable(): Boolean = File(modelPath).exists()
-
-    /** Loads the model. Heavy operation - always call off the main thread. */
-    suspend fun initialize() = withContext(Dispatchers.IO) {
-        val config = EngineConfig(
-            modelPath = modelPath,
-            backend = Backend.GPU(), // devices without GPU: Backend.CPU()
-            cacheDir = context.cacheDir.path, // /data/local/tmp may not be writable by the app
-        )
-        engine = Engine(config).also { it.initialize() }
-    }
-
     /** Runs a single turn and maps the model output to a typed decision. */
-    suspend fun decide(userInput: String): AiNavigationDecision = withContext(Dispatchers.IO) {
+    /*suspend fun decide(userInput: String): AiNavigationDecision = withContext(Dispatchers.IO) {
         val activeEngine = engine ?: error("Wywolaj initialize() przed decide()")
         activeEngine.createConversation(
             ConversationConfig(
@@ -51,7 +38,7 @@ class OnDeviceAiNavigator(
                 automaticToolCalling = false,
 //                samplerConfig = SamplerConfig(...) // tutaj parametr
             ),
-        ).use { conversation ->
+        ).use { conversation: Conversation ->
             val response = conversation.sendMessage(userInput)
             val toolCall = response.toolCalls.firstOrNull()
             val text = response.contents.contents
@@ -70,11 +57,5 @@ class OnDeviceAiNavigator(
                 else -> AiNavigationDecision.Unknown(response.toString())
             }
         }
-    }
-
-    /** Releases native resources held by the engine. */
-    fun close() {
-        engine?.close()
-        engine = null
-    }
+    }*/
 }

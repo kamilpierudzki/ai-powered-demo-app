@@ -7,7 +7,7 @@ package com.pierudzki.aipowereddemoapp.ai
  * The set mirrors the existing screens in `core/ui`.
  */
 enum class AppDestination(val id: String, val description: String) {
-    WELCOME("welcome", "Ekran powitalny z wyborem flow"),
+    WELCOME("welcome", "Application welcome screen"),
     PARAMS("params", "Ekran wprowadzania parametrow (czas w sekundach)"),
     CALCULATION("calculation", "Ekran trwajacych obliczen"),
     SUCCESS("success", "Ekran sukcesu po zakonczeniu obliczen");

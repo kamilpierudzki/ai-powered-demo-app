@@ -9,8 +9,4 @@ package com.pierudzki.aipowereddemoapp.ai
 object ModelConfig {
     const val MODEL_FILE_NAME = "gemma-4-E4B-it.litertlm"
     const val MODEL_PATH = "/data/local/tmp/llm/$MODEL_FILE_NAME"
-
-    const val SYSTEM_PROMPT =
-        "Jestes asystentem nawigacji w aplikacji. Na podstawie wiadomosci uzytkownika " +
-            "zawsze wywoluj narzedzie navigateToScreen z wlasciwym ekranem docelowym."
 }

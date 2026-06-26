@@ -19,25 +19,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.pierudzki.aipowereddemoapp.ai.AiNavigationViewModel
-import com.pierudzki.aipowereddemoapp.ai.AiUiState
+import com.pierudzki.aipowereddemoapp.ai.EngineState
 import com.pierudzki.aipowereddemoapp.ai.AppDestination
 import com.pierudzki.aipowereddemoapp.ai.ModelConfig
+import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel
 
 @Composable
 fun AiNavigationScreen(
     onNavigateToDestination: (AppDestination) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: AiNavigationViewModel = viewModel(),
+    viewModel: WelcomeScreenViewModel = viewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    /*val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.destinations.collect(onNavigateToDestination)
     }
 
     var input by rememberSaveable { mutableStateOf("") }
-    val canSubmit = uiState is AiUiState.Ready || uiState is AiUiState.Info
+    val canSubmit = uiState is EngineState.Ready || uiState is EngineState.Info
 
     Scaffold(modifier = modifier) { innerPadding ->
         Column(
@@ -50,21 +50,21 @@ fun AiNavigationScreen(
             Text(text = "Napisz, dokad chcesz przejsc, a model zdecyduje o ekranie.")
 
             when (val state = uiState) {
-                AiUiState.ModelUnavailable ->
+                EngineState.ModelUnavailable ->
                     Text("Model niedostepny. Wgraj plik modelu do: ${ModelConfig.MODEL_PATH}")
 
-                AiUiState.Initializing -> {
+                EngineState.Initializing -> {
                     CircularProgressIndicator()
                     Text("Ladowanie modelu...")
                 }
 
-                AiUiState.Deciding -> {
+                EngineState.Deciding -> {
                     CircularProgressIndicator()
                     Text("Analizuje...")
                 }
 
-                is AiUiState.Info -> Text(state.text)
-                AiUiState.Ready -> {}
+                is EngineState.Info -> Text(state.text)
+                EngineState.Ready -> {}
             }
 
             TextField(
@@ -81,5 +81,5 @@ fun AiNavigationScreen(
                 Text("Wyslij")
             }
         }
-    }
+    }*/
 }

@@ -1,11 +1,15 @@
 package com.pierudzki.aipowereddemoapp.core.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.pierudzki.aipowereddemoapp.ai.AppDestination
+import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel
 
 private const val ROUTE_AI = "ai"
 
@@ -16,9 +20,18 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         startDestination = AppDestination.WELCOME.id,
     ) {
         composable(AppDestination.WELCOME.id) {
+            val viewModel: WelcomeScreenViewModel = viewModel()
+
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+
             WelcomeScreen(
-                onStandardFlowClicked = { navController.navigate(AppDestination.PARAMS.id) },
-                onAiPoweredFlowClicked = { navController.navigate(ROUTE_AI) },
+                state = state,
+                onSubmitLanguageClicked = {
+                    viewModel.onAppLanguageUpdated(it)
+                },
+                onStartClicked = {
+                    // todo
+                },
             )
         }
         composable(AppDestination.PARAMS.id) {
@@ -37,11 +50,11 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
         composable(ROUTE_AI) {
-            AiNavigationScreen(
+            /*AiNavigationScreen(
                 onNavigateToDestination = { destination ->
                     navController.navigate(destination.id) { launchSingleTop = true }
                 },
-            )
+            )*/
         }
     }
 }
