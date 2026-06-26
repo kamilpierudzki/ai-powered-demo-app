@@ -1,14 +1,11 @@
 package com.pierudzki.aipowereddemoapp.core.ui
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -27,7 +24,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pierudzki.aipowereddemoapp.R
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel
@@ -43,26 +39,26 @@ fun WelcomeScreen(
     var isEditingEnabled by remember { mutableStateOf(false) }
     var hintText by remember { mutableStateOf("") }
     var submitButtonText by remember { mutableStateOf("") }
+    var startButtonText by remember { mutableStateOf("") }
 
     LaunchedEffect(state) {
         isEditingEnabled =
-            (state as? WelcomeScreenViewModel.UiState.Ready)?.loadingTexts != true &&
-                    state !is WelcomeScreenViewModel.UiState.Info &&
+            state !is WelcomeScreenViewModel.UiState.Error &&
                     state !is WelcomeScreenViewModel.UiState.ModelUnavailable &&
-                    state !is WelcomeScreenViewModel.UiState.Initializing
+                    state !is WelcomeScreenViewModel.UiState.Initializing &&
+                    !state.loadingTexts
 
-        if (state is WelcomeScreenViewModel.UiState.Ready) {
-            hintText = state.languageSelectionHint
-            submitButtonText = state.submitButtonText
-        }
+
+        hintText = state.languageSelectionHintText
+        submitButtonText = state.submitButtonText
+        startButtonText = state.startButtonText
     }
 
     Scaffold(
         modifier = modifier,
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .padding(innerPadding)
+            modifier = Modifier.padding(innerPadding)
         ) {
             Text(
                 text = buildAnnotatedString {
@@ -82,11 +78,11 @@ fun WelcomeScreen(
                     .padding(32.dp),
             )
 
-            if (state is WelcomeScreenViewModel.UiState.Initializing) {
+            if (state is WelcomeScreenViewModel.UiState.Initializing || state.loadingTexts) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             }
 
-            if (state is WelcomeScreenViewModel.UiState.Info) {
+            if (state is WelcomeScreenViewModel.UiState.Error) {
                 Text(
                     text = state.text,
                     color = androidx.compose.ui.graphics.Color.Red,
@@ -114,24 +110,15 @@ fun WelcomeScreen(
                 }
             }
 
-            if (state is WelcomeScreenViewModel.UiState.Ready) {
+            if (state is WelcomeScreenViewModel.UiState.EngineReady) {
                 Button(
                     onClick = onStartClicked,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = state.startButtonText,
-                            modifier = Modifier.alpha(if (state.loadingTexts) 0f else 1f),
-                        )
-                        if (state.loadingTexts) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = LocalContentColor.current,
-                            )
-                        }
-                    }
+                    Text(
+                        text = startButtonText,
+                        modifier = Modifier.alpha(if (state.loadingTexts) 0f else 1f),
+                    )
                 }
             }
         }

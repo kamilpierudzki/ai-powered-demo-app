@@ -31,7 +31,7 @@ sealed interface EngineState {
         override val appLanguage: String,
     ) : EngineState
 
-    data class Info(
+    data class Error(
         val message: String,
         override val modelName: String,
         override val appLanguage: String,
@@ -87,7 +87,7 @@ object EngineWrapper {
                 }
             } catch (e: Exception) {
                 android.util.Log.d("EngineWrapper", "initialize(...), Error: ${e.message}")
-                _state.value = EngineState.Info(
+                _state.value = EngineState.Error(
                     message = "Initialization error: ${e.message}",
                     modelName = modelName(),
                     appLanguage = appLanguage,
