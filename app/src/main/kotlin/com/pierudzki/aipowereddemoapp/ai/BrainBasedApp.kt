@@ -66,6 +66,7 @@ fun BrainBasedApp() {
         is ShowCalculationScreen -> {
             val calculationScreenViewModel: CalculationScreenViewModel = viewModel()
             val values by calculationScreenViewModel.values.collectAsStateWithLifecycle()
+            val calculationDurationSeconds by calculationScreenViewModel.calculationDurationSeconds.collectAsStateWithLifecycle()
 
             LaunchedEffect(current.n) {
                 calculationScreenViewModel.startCalculation(current.n)
@@ -78,6 +79,7 @@ fun BrainBasedApp() {
             CalculationScreen(
                 screenHint = "aaa bbb ccc...", // todo na razie zostawić
                 values = values,
+                calculationDurationSeconds = calculationDurationSeconds,
             )
         }
     }
