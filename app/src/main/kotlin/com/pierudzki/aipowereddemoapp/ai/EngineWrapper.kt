@@ -14,27 +14,18 @@ import java.io.File
 sealed interface EngineState {
 
     val modelName: String
-    val appLanguage: String
-
-    data class ModelUnavailable(
-        override val modelName: String,
-        override val appLanguage: String,
-    ) : EngineState
 
     data class Initializing(
         override val modelName: String,
-        override val appLanguage: String,
     ) : EngineState
 
     data class Ready(
         override val modelName: String,
-        override val appLanguage: String,
     ) : EngineState
 
     data class Error(
         val message: String,
         override val modelName: String,
-        override val appLanguage: String,
     ) : EngineState
 }
 
@@ -43,12 +34,9 @@ object EngineWrapper {
     var engine: Engine? = null
         private set
 
-    var appLanguage: String = "english"
-
     private val _state = MutableStateFlow<EngineState>(
         EngineState.Initializing(
             modelName = modelName(),
-            appLanguage = appLanguage,
         )
     )
     val state: StateFlow<EngineState> = _state.asStateFlow()
@@ -59,10 +47,10 @@ object EngineWrapper {
             return@withContext
         }
         if (!isModelAvailable()) {
-            android.util.Log.d("EngineWrapper", "initialize(...), ModelUnavailable")
-            _state.value = EngineState.ModelUnavailable(
+            android.util.Log.d("EngineWrapper", "initialize(...), Model not available")
+            _state.value = EngineState.Error(
+                message = "Model not available",
                 modelName = modelName(),
-                appLanguage = appLanguage,
             )
         } else {
             val appContext = context.applicationContext
@@ -76,13 +64,11 @@ object EngineWrapper {
                     android.util.Log.d("EngineWrapper", "initialize(...), Initializing")
                     _state.value = EngineState.Initializing(
                         modelName = modelName(),
-                        appLanguage = appLanguage,
                     )
                     it.initialize()
                     android.util.Log.d("EngineWrapper", "initialize(...), Ready")
                     _state.value = EngineState.Ready(
                         modelName = modelName(),
-                        appLanguage = appLanguage,
                     )
                 }
             } catch (e: Exception) {
@@ -90,7 +76,6 @@ object EngineWrapper {
                 _state.value = EngineState.Error(
                     message = "Initialization error: ${e.message}",
                     modelName = modelName(),
-                    appLanguage = appLanguage,
                 )
             }
         }

@@ -5,8 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
+import com.pierudzki.aipowereddemoapp.ai.BrainBasedApp
 import com.pierudzki.aipowereddemoapp.ai.EngineWrapper
-import com.pierudzki.aipowereddemoapp.core.ui.AppNavHost
 import com.pierudzki.aipowereddemoapp.core.ui.theme.AIPPoweredDemoAppTheme
 import kotlinx.coroutines.launch
 
@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AIPPoweredDemoAppTheme {
-                AppNavHost()
+                BrainBasedApp()
             }
         }
     }

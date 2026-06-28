@@ -1,7 +1,7 @@
 package com.pierudzki.aipowereddemoapp.ai
 
 /**
- * Static configuration for the on-device generative model used by [OnDeviceAiNavigator].
+ * Static configuration for the on-device generative model used by the app.
  *
  * The model file is too large to ship inside the APK, so during development it is pushed to the
  * device with `adb` (see project plan). For production it should be downloaded at runtime instead.
