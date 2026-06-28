@@ -4,7 +4,7 @@ import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.SamplerConfig
-import com.pierudzki.aipowereddemoapp.core.ParamsSettingsScreenTexts
+import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreenTexts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import org.json.JSONObject
 
-class ParamsSettingsScreenTextsInference {
+class ParamsSettingScreenTextsInference {
 
     sealed interface Status {
-        data class Ready(val value: ParamsSettingsScreenTexts) : Status
+        data class Ready(val value: ParamsSettingScreenTexts) : Status
         data object Processing : Status
     }
 
@@ -52,7 +52,7 @@ class ParamsSettingsScreenTextsInference {
 
     private val creativeConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = 1.0)
 
-    private val fallback = ParamsSettingsScreenTexts(
+    private val fallback = ParamsSettingScreenTexts(
         languageHint = "error",
         changeLanguageButton = "error",
         nHint = "error",
@@ -88,11 +88,11 @@ class ParamsSettingsScreenTextsInference {
         }
         .flowOn(Dispatchers.IO)
 
-    private fun parse(raw: String): ParamsSettingsScreenTexts = try {
+    private fun parse(raw: String): ParamsSettingScreenTexts = try {
         val start = raw.indexOf('{')
         val end = raw.lastIndexOf('}')
         val json = JSONObject(raw.substring(start, end + 1))
-        ParamsSettingsScreenTexts(
+        ParamsSettingScreenTexts(
             languageHint = json.optString("languageHint", fallback.languageHint),
             changeLanguageButton = json.optString("changeLanguageButton", fallback.changeLanguageButton),
             nHint = json.optString("nHint", fallback.nHint),

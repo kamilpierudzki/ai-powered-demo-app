@@ -7,7 +7,7 @@ import com.google.ai.edge.litertlm.SamplerConfig
 import com.pierudzki.aipowereddemoapp.ai.action.Action
 import com.pierudzki.aipowereddemoapp.ai.answer.Answer
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowCalculationScreen
-import com.pierudzki.aipowereddemoapp.ai.answer.ShowParamsSettingScreen
+import com.pierudzki.aipowereddemoapp.ai.answer.ShowParamsSettingScreenAndRefreshTexts
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowWelcomeScreen
 import com.pierudzki.aipowereddemoapp.core.AppDestination
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +49,12 @@ class Brain {
         }
     }
 
+    private fun currentScreenId(): String = when (_answer.value) {
+        is ShowWelcomeScreen -> AppDestination.WELCOME.id
+        is ShowParamsSettingScreenAndRefreshTexts -> AppDestination.PARAMS.id
+        is ShowCalculationScreen -> AppDestination.CALCULATION.id
+    }
+
     private fun systemPrompt(): String =
         """
         You are the navigation brain of an Android app. Based on the user's action and the current
@@ -62,6 +68,7 @@ class Brain {
           produced values.
 
         Current state:
+        - currentScreen: "${currentScreenId()}"
         - appLanguage: "$appLanguage"
         - n: $n
 
@@ -69,6 +76,7 @@ class Brain {
         - When the user is ready to start from the welcome screen, go to "params".
         - When the user changes the app language, stay on "params" and update appLanguage.
         - When the user finishes setting the parameters, go to "calculation".
+        - When the user presses the back button while on "calculation", go to "params".
         - When the user presses the back button while on "params", go to "welcome".
 
         Respond with ONLY a single minified JSON object, without markdown code fences and without
@@ -88,7 +96,7 @@ class Brain {
         appLanguage = json.optString("appLanguage", appLanguage)
         n = json.optInt("n", n)
         when (AppDestination.fromId(json.optString("screen"))) {
-            AppDestination.PARAMS -> ShowParamsSettingScreen(n = n, appLanguage = appLanguage)
+            AppDestination.PARAMS -> ShowParamsSettingScreenAndRefreshTexts(n = n, appLanguage = appLanguage)
             AppDestination.WELCOME -> ShowWelcomeScreen
             AppDestination.CALCULATION -> ShowCalculationScreen(n = n)
             null -> _answer.value

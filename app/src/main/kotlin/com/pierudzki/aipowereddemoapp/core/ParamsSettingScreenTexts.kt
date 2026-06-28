@@ -1,6 +1,6 @@
 package com.pierudzki.aipowereddemoapp.core
 
-data class ParamsSettingsScreenTexts(
+data class ParamsSettingScreenTexts(
     val languageHint: String,
     val changeLanguageButton: String,
     val nHint: String,

@@ -11,11 +11,12 @@ import com.pierudzki.aipowereddemoapp.ai.action.UserFinishedSettingUpParams
 import com.pierudzki.aipowereddemoapp.ai.action.UserIsReadyToStartUsingBrain
 import com.pierudzki.aipowereddemoapp.ai.action.UserPressedBackButton
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowCalculationScreen
-import com.pierudzki.aipowereddemoapp.ai.answer.ShowParamsSettingScreen
+import com.pierudzki.aipowereddemoapp.ai.answer.ShowParamsSettingScreenAndRefreshTexts
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowWelcomeScreen
 import com.pierudzki.aipowereddemoapp.core.CalculationScreen
 import com.pierudzki.aipowereddemoapp.core.CalculationScreenViewModel
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreen
+import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreenViewModel
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreen
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel
 
@@ -37,8 +38,13 @@ fun BrainBasedApp() {
             )
         }
 
-        is ShowParamsSettingScreen -> {
-            val screenTexts by brainViewModel.paramsSettingsScreenTexts.collectAsStateWithLifecycle()
+        is ShowParamsSettingScreenAndRefreshTexts -> {
+            val paramsSettingScreenViewModel: ParamsSettingScreenViewModel = viewModel()
+            val screenTexts by paramsSettingScreenViewModel.paramsSettingScreenTexts.collectAsStateWithLifecycle()
+
+            LaunchedEffect(current.appLanguage) {
+                paramsSettingScreenViewModel.refreshTextsOnScreenScreen(current.appLanguage)
+            }
 
             BackHandler {
                 brainViewModel.onNewInputAction(UserPressedBackButton())
@@ -66,10 +72,11 @@ fun BrainBasedApp() {
             }
 
             BackHandler {
-                brainViewModel.onNewInputAction(UserPressedBackButton()) // todo poprawić system prompt w Brain aby poprawnie cofał do poprzedniego ekranu
+                brainViewModel.onNewInputAction(UserPressedBackButton())
             }
 
             CalculationScreen(
+                screenHint = "aaa bbb ccc...", // todo na razie zostawić
                 values = values,
             )
         }

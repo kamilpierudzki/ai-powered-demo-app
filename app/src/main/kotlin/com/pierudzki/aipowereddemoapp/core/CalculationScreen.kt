@@ -13,9 +13,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun CalculationScreen(
+    screenHint: String,
     values: List<String>,
     modifier: Modifier = Modifier,
 ) {
@@ -27,7 +29,12 @@ fun CalculationScreen(
                 .fillMaxSize(),
         ) {
             CircularProgressIndicator()
-
+            Text(
+                text = screenHint,
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .padding(vertical = 8.dp),
+            )
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -45,6 +52,7 @@ fun CalculationScreen(
 @Composable
 private fun CalculationScreenPrev() {
     CalculationScreen(
+        screenHint = "Calculating...",
         values = listOf("1: 111", "2: 312", "3: 842"),
         modifier = Modifier,
     )

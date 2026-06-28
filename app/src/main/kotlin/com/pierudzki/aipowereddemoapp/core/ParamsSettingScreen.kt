@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ParamsSettingScreen(
-    screenTexts: ParamsSettingsScreenTexts,
+    screenTexts: ParamsSettingScreenTexts,
     appLanguage: String,
     n: Int,
     onAppLanguageChanged: (String) -> Unit,
