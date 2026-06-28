@@ -1,55 +1,51 @@
-package com.pierudzki.aipowereddemoapp.core.ui
+package com.pierudzki.aipowereddemoapp.core
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun CalculationScreen(
-    onCalculationCancelled: () -> Unit,
+    values: List<String>,
     modifier: Modifier = Modifier,
 ) {
-
-    LaunchedEffect(Unit) {
-        startCalculation()
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            onCalculationCancelled()
-        }
-    }
-
     Scaffold(modifier = modifier) { innerPadding ->
         Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxWidth(),
+                .fillMaxSize(),
         ) {
             CircularProgressIndicator()
-            Text(text = "Calculating...")
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
+                items(values) { value ->
+                    Text(text = value)
+                }
+            }
         }
     }
-}
-
-private fun startCalculation() {
-    // todo
 }
 
 @Preview
 @Composable
 private fun CalculationScreenPrev() {
     CalculationScreen(
-        onCalculationCancelled = {},
+        values = listOf("1: 111", "2: 312", "3: 842"),
         modifier = Modifier,
     )
 }

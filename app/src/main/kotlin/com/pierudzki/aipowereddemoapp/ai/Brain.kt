@@ -6,6 +6,7 @@ import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.pierudzki.aipowereddemoapp.ai.action.Action
 import com.pierudzki.aipowereddemoapp.ai.answer.Answer
+import com.pierudzki.aipowereddemoapp.ai.answer.ShowCalculationScreen
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowParamsSettingScreen
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowWelcomeScreen
 import com.pierudzki.aipowereddemoapp.core.AppDestination
@@ -57,6 +58,8 @@ class Brain {
         - "welcome": the welcome screen with a button that starts the app.
         - "params": the screen where the user sets the app language and the N value for the
           Fibonacci sequence.
+        - "calculation": the screen that runs the Fibonacci calculation for N and shows the
+          produced values.
 
         Current state:
         - appLanguage: "$appLanguage"
@@ -65,13 +68,12 @@ class Brain {
         Rules:
         - When the user is ready to start from the welcome screen, go to "params".
         - When the user changes the app language, stay on "params" and update appLanguage.
-        - When the user finishes setting the parameters, stay on "params"
-          (the calculation screen is not implemented yet).
+        - When the user finishes setting the parameters, go to "calculation".
         - When the user presses the back button while on "params", go to "welcome".
 
         Respond with ONLY a single minified JSON object, without markdown code fences and without
         any extra text or explanation. Use exactly these keys:
-        - "screen": one of "welcome", "params".
+        - "screen": one of "welcome", "params", "calculation".
         - "n": integer, the current or updated N value.
         - "appLanguage": string, the current or updated app language.
 
@@ -88,6 +90,7 @@ class Brain {
         when (AppDestination.fromId(json.optString("screen"))) {
             AppDestination.PARAMS -> ShowParamsSettingScreen(n = n, appLanguage = appLanguage)
             AppDestination.WELCOME -> ShowWelcomeScreen
+            AppDestination.CALCULATION -> ShowCalculationScreen(n = n)
             null -> _answer.value
         }
     } catch (e: Exception) {
