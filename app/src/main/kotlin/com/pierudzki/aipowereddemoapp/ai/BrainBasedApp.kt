@@ -75,6 +75,7 @@ fun BrainBasedApp() {
             val values by calculationScreenViewModel.values.collectAsStateWithLifecycle()
             val calculationDurationSeconds by calculationScreenViewModel.calculationDurationSeconds.collectAsStateWithLifecycle()
             val isFinished by calculationScreenViewModel.isFinished.collectAsStateWithLifecycle()
+            val screenHint by calculationScreenViewModel.screenHint.collectAsStateWithLifecycle()
 
             LaunchedEffect(current.n) {
                 calculationScreenViewModel.startCalculation(current.n)
@@ -82,7 +83,11 @@ fun BrainBasedApp() {
 
             LaunchedEffect(calculationDurationSeconds) {
                 if (calculationDurationSeconds > 0) {
-                    brainViewModel.onNewInputAction(CalculationDurationUpdated(calculationDurationSeconds))
+                    brainViewModel.onNewInputAction(
+                        CalculationDurationUpdated(
+                            calculationDurationSeconds
+                        )
+                    )
                 }
             }
 
@@ -102,8 +107,12 @@ fun BrainBasedApp() {
                 brainViewModel.onNewInputAction(UserPressedBackButton())
             }
 
+            LaunchedEffect(current.appLanguage) {
+                calculationScreenViewModel.refreshTextsOnScreenScreen(current.appLanguage)
+            }
+
             CalculationScreen(
-                screenHint = "aaa bbb ccc...", // todo na razie zostawić
+                screenHint = screenHint,
                 values = values,
                 calculationDurationSeconds = calculationDurationSeconds,
             )

@@ -112,7 +112,7 @@ class Brain {
         when (AppDestination.fromId(json.optString("screen"))) {
             AppDestination.PARAMS -> ShowParamsSettingScreenAndRefreshTexts(n = n, appLanguage = appLanguage)
             AppDestination.WELCOME -> ShowWelcomeScreen
-            AppDestination.CALCULATION -> ShowCalculationScreen(n = n)
+            AppDestination.CALCULATION -> ShowCalculationScreen(n = n, appLanguage = appLanguage)
             AppDestination.SUCCESS -> ShowSuccessScreen
             AppDestination.FAILURE -> ShowFailureScreen
             null -> _answer.value
