@@ -24,12 +24,17 @@ class CalculationScreenViewModel(application: Application) : AndroidViewModel(ap
     private val _values = MutableStateFlow<List<String>>(emptyList())
     val values: StateFlow<List<String>> = _values.asStateFlow()
 
+    private val _isFinished = MutableStateFlow(false)
+    val isFinished: StateFlow<Boolean> = _isFinished.asStateFlow()
+
     private var timerJob: Job? = null
+    private var calculationJob: Job? = null
 
     fun startCalculation(n: Int) {
         val startedAt = SystemClock.elapsedRealtime()
         _calculationDurationSeconds.value = 0
         _values.value = emptyList()
+        _isFinished.value = false
 
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
@@ -40,7 +45,8 @@ class CalculationScreenViewModel(application: Application) : AndroidViewModel(ap
             }
         }
 
-        viewModelScope.launch(Dispatchers.Default) {
+        calculationJob?.cancel()
+        calculationJob = viewModelScope.launch(Dispatchers.Default) {
             (0 until n).forEach { i ->
                 val result = fib(i)
                 withContext(Dispatchers.Main) {
@@ -50,7 +56,13 @@ class CalculationScreenViewModel(application: Application) : AndroidViewModel(ap
             timerJob?.cancel()
             _calculationDurationSeconds.value =
                 ((SystemClock.elapsedRealtime() - startedAt) / 1000).toInt()
+            _isFinished.value = true
         }
+    }
+
+    fun stopCalculation() {
+        timerJob?.cancel()
+        calculationJob?.cancel()
     }
 
     private fun fib(n: Int): Long {
