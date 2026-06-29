@@ -7,7 +7,11 @@ import com.pierudzki.aipowereddemoapp.ai.action.Action
 import com.pierudzki.aipowereddemoapp.ai.answer.Answer
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreenTexts
 import com.pierudzki.aipowereddemoapp.core.ResultScreenTexts
+import com.pierudzki.aipowereddemoapp.core.WelcomeScreenUiState
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -21,7 +25,20 @@ class BrainViewModel(application: Application) : AndroidViewModel(application) {
     val successTexts: StateFlow<ResultScreenTexts> = brain.successTexts
     val failureTexts: StateFlow<ResultScreenTexts> = brain.failureTexts
 
+    val welcomeUiState: StateFlow<WelcomeScreenUiState> = brain.engineState
+        .map { it.toWelcomeUiState() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, brain.engineState.value.toWelcomeUiState())
+
     private val brainMutex = Mutex()
+
+    init {
+        viewModelScope.launch { brain.initializeEngine(getApplication()) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        brain.closeEngine()
+    }
 
     fun onNewInputAction(action: Action) {
         viewModelScope.launch {
@@ -55,5 +72,11 @@ class BrainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refreshFailureTexts(language: String) {
         viewModelScope.launch { brain.generateFailureTexts(language) }
+    }
+
+    private fun EngineState.toWelcomeUiState(): WelcomeScreenUiState = when (this) {
+        is EngineState.Initializing -> WelcomeScreenUiState.Initializing(modelName)
+        is EngineState.Error -> WelcomeScreenUiState.Error(modelName, message)
+        is EngineState.Ready -> WelcomeScreenUiState.EngineReady(modelName)
     }
 }

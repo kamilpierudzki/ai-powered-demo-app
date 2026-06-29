@@ -29,7 +29,7 @@ sealed interface EngineState {
     ) : EngineState
 }
 
-object EngineWrapper {
+class EngineWrapper {
 
     var engine: Engine? = null
         private set

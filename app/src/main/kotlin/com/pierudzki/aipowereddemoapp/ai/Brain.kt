@@ -1,5 +1,6 @@
 package com.pierudzki.aipowereddemoapp.ai
 
+import android.content.Context
 import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.ConversationConfig
@@ -52,8 +53,16 @@ class Brain {
     private val navigationConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = 0.2)
     private val creativeConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = 1.0)
 
+    private val engineWrapper = EngineWrapper()
+
+    val engineState: StateFlow<EngineState> = engineWrapper.state
+
+    suspend fun initializeEngine(context: Context) = engineWrapper.initialize(context)
+
+    fun closeEngine() = engineWrapper.close()
+
     suspend fun onNewInputAction(action: Action) = withContext(Dispatchers.IO) {
-        val activeEngine = EngineWrapper.engine ?: return@withContext
+        val activeEngine = engineWrapper.engine ?: return@withContext
         try {
             activeEngine.createConversation(
                 ConversationConfig(
@@ -86,7 +95,7 @@ class Brain {
         lastParamsTextsLanguage = language
         _paramsTexts.value = _paramsTexts.value.copy(loading = true)
 
-        val activeEngine = EngineWrapper.engine ?: run {
+        val activeEngine = engineWrapper.engine ?: run {
             _paramsTexts.value = PARAMS_FALLBACK
             return@withContext
         }
@@ -114,7 +123,7 @@ class Brain {
         if (language == lastCalculationHintLanguage) return@withContext
         lastCalculationHintLanguage = language
 
-        val activeEngine = EngineWrapper.engine ?: run {
+        val activeEngine = engineWrapper.engine ?: run {
             _calculationHint.value = FALLBACK_TEXT
             return@withContext
         }
@@ -151,7 +160,7 @@ class Brain {
     }
 
     private fun resultTextsFor(prompt: String): ResultScreenTexts {
-        val activeEngine = EngineWrapper.engine ?: return RESULT_FALLBACK
+        val activeEngine = engineWrapper.engine ?: return RESULT_FALLBACK
         return try {
             activeEngine.createConversation(
                 ConversationConfig(

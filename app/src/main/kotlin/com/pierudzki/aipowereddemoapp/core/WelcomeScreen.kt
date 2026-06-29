@@ -19,9 +19,26 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.pierudzki.aipowereddemoapp.R
 
+sealed interface WelcomeScreenUiState {
+    val modelName: String
+
+    data class Initializing(
+        override val modelName: String,
+    ) : WelcomeScreenUiState
+
+    data class EngineReady(
+        override val modelName: String,
+    ) : WelcomeScreenUiState
+
+    data class Error(
+        override val modelName: String,
+        val text: String,
+    ) : WelcomeScreenUiState
+}
+
 @Composable
 fun WelcomeScreen(
-    uiState: WelcomeScreenViewModel.UiState,
+    uiState: WelcomeScreenUiState,
     onStartClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -49,11 +66,11 @@ fun WelcomeScreen(
                     .padding(32.dp),
             )
 
-            if (uiState is WelcomeScreenViewModel.UiState.Initializing) {
+            if (uiState is WelcomeScreenUiState.Initializing) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             }
 
-            if (uiState is WelcomeScreenViewModel.UiState.Error) {
+            if (uiState is WelcomeScreenUiState.Error) {
                 Text(
                     text = uiState.text,
                     color = androidx.compose.ui.graphics.Color.Red,
@@ -61,7 +78,7 @@ fun WelcomeScreen(
                 )
             }
 
-            if (uiState is WelcomeScreenViewModel.UiState.EngineReady) {
+            if (uiState is WelcomeScreenUiState.EngineReady) {
                 Button(
                     onClick = onStartClicked,
                     modifier = Modifier.align(Alignment.CenterHorizontally)

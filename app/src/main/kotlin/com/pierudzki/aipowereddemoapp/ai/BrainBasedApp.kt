@@ -22,7 +22,6 @@ import com.pierudzki.aipowereddemoapp.core.CalculationScreen
 import com.pierudzki.aipowereddemoapp.core.CalculationScreenViewModel
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreen
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreen
-import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel
 import com.pierudzki.aipowereddemoapp.core.ui.FailureScreen
 import com.pierudzki.aipowereddemoapp.core.ui.SuccessScreen
 
@@ -33,8 +32,7 @@ fun BrainBasedApp() {
 
     when (val current = answer) {
         is ShowWelcomeScreen -> {
-            val welcomeScreenViewModel: WelcomeScreenViewModel = viewModel()
-            val uiState by welcomeScreenViewModel.uiState.collectAsStateWithLifecycle()
+            val uiState by brainViewModel.welcomeUiState.collectAsStateWithLifecycle()
 
             WelcomeScreen(
                 uiState = uiState,
