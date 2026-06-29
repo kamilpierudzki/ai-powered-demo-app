@@ -21,7 +21,6 @@ import com.pierudzki.aipowereddemoapp.ai.answer.ShowWelcomeScreen
 import com.pierudzki.aipowereddemoapp.core.CalculationScreen
 import com.pierudzki.aipowereddemoapp.core.CalculationScreenViewModel
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreen
-import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreenViewModel
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreen
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreenViewModel
 import com.pierudzki.aipowereddemoapp.core.ui.FailureScreen
@@ -46,11 +45,10 @@ fun BrainBasedApp() {
         }
 
         is ShowParamsSettingScreenAndRefreshTexts -> {
-            val paramsSettingScreenViewModel: ParamsSettingScreenViewModel = viewModel()
-            val screenTexts by paramsSettingScreenViewModel.paramsSettingScreenTexts.collectAsStateWithLifecycle()
+            val screenTexts by brainViewModel.paramsTexts.collectAsStateWithLifecycle()
 
             LaunchedEffect(current.appLanguage) {
-                paramsSettingScreenViewModel.refreshTextsOnScreenScreen(current.appLanguage)
+                brainViewModel.refreshParamsTexts(current.appLanguage)
             }
 
             BackHandler {
@@ -75,7 +73,7 @@ fun BrainBasedApp() {
             val values by calculationScreenViewModel.values.collectAsStateWithLifecycle()
             val calculationDurationSeconds by calculationScreenViewModel.calculationDurationSeconds.collectAsStateWithLifecycle()
             val isFinished by calculationScreenViewModel.isFinished.collectAsStateWithLifecycle()
-            val screenHint by calculationScreenViewModel.screenHint.collectAsStateWithLifecycle()
+            val screenHint by brainViewModel.calculationHint.collectAsStateWithLifecycle()
 
             LaunchedEffect(current.n) {
                 calculationScreenViewModel.startCalculation(current.n)
@@ -108,7 +106,7 @@ fun BrainBasedApp() {
             }
 
             LaunchedEffect(current.appLanguage) {
-                calculationScreenViewModel.refreshTextsOnScreenScreen(current.appLanguage)
+                brainViewModel.refreshCalculationHint(current.appLanguage)
             }
 
             CalculationScreen(
@@ -119,7 +117,14 @@ fun BrainBasedApp() {
         }
 
         is ShowSuccessScreen -> {
+            val successTexts by brainViewModel.successTexts.collectAsStateWithLifecycle()
+
+            LaunchedEffect(current.appLanguage) {
+                brainViewModel.refreshSuccessTexts(current.appLanguage)
+            }
+
             SuccessScreen(
+                texts = successTexts,
                 onBackClicked = {
                     brainViewModel.onNewInputAction(UserPressedBackButton())
                 },
@@ -127,7 +132,14 @@ fun BrainBasedApp() {
         }
 
         is ShowFailureScreen -> {
+            val failureTexts by brainViewModel.failureTexts.collectAsStateWithLifecycle()
+
+            LaunchedEffect(current.appLanguage) {
+                brainViewModel.refreshFailureTexts(current.appLanguage)
+            }
+
             FailureScreen(
+                texts = failureTexts,
                 onBackClicked = {
                     brainViewModel.onNewInputAction(UserPressedBackButton())
                 },

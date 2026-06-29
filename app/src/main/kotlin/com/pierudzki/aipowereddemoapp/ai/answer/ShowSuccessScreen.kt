@@ -1,3 +1,3 @@
 package com.pierudzki.aipowereddemoapp.ai.answer
 
-data object ShowSuccessScreen : Answer
+data class ShowSuccessScreen(val appLanguage: String) : Answer

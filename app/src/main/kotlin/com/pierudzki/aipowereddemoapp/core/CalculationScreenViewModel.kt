@@ -4,7 +4,6 @@ import android.app.Application
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.pierudzki.aipowereddemoapp.ai.CalculationScreenTextsInference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -25,16 +24,11 @@ class CalculationScreenViewModel(application: Application) : AndroidViewModel(ap
     private val _values = MutableStateFlow<List<String>>(emptyList())
     val values: StateFlow<List<String>> = _values.asStateFlow()
 
-    private var lastCalculationScreenText = "Loading..."
-    private val _calculationScreenTexts = MutableStateFlow(lastCalculationScreenText)
-    val screenHint: StateFlow<String> = _calculationScreenTexts.asStateFlow()
-
     private val _isFinished = MutableStateFlow(false)
     val isFinished: StateFlow<Boolean> = _isFinished.asStateFlow()
 
     private var timerJob: Job? = null
     private var calculationJob: Job? = null
-    private val screenTextsInference = CalculationScreenTextsInference()
 
     fun startCalculation(n: Int) {
         val startedAt = SystemClock.elapsedRealtime()
@@ -47,7 +41,7 @@ class CalculationScreenViewModel(application: Application) : AndroidViewModel(ap
             while (isActive) {
                 delay(1_000.milliseconds)
                 _calculationDurationSeconds.value =
-                    ((SystemClock.elapsedRealtime() - startedAt) / 1000).toInt()
+                    ((SystemClock.elapsedRealtime() - startedAt) / 1_000).toInt()
             }
         }
 
@@ -61,7 +55,7 @@ class CalculationScreenViewModel(application: Application) : AndroidViewModel(ap
             }
             timerJob?.cancel()
             _calculationDurationSeconds.value =
-                ((SystemClock.elapsedRealtime() - startedAt) / 1000).toInt()
+                ((SystemClock.elapsedRealtime() - startedAt) / 1_000).toInt()
             _isFinished.value = true
         }
     }
@@ -69,22 +63,6 @@ class CalculationScreenViewModel(application: Application) : AndroidViewModel(ap
     fun stopCalculation() {
         timerJob?.cancel()
         calculationJob?.cancel()
-    }
-
-    fun refreshTextsOnScreenScreen(language: String) {
-        viewModelScope.launch {
-            screenTextsInference.run(language).collect { status ->
-                when (status) {
-                    CalculationScreenTextsInference.Status.Processing -> {
-                    }
-
-                    is CalculationScreenTextsInference.Status.Ready -> {
-                        lastCalculationScreenText = status.value
-                        _calculationScreenTexts.value = lastCalculationScreenText
-                    }
-                }
-            }
-        }
     }
 
     private fun fib(n: Int): Long {

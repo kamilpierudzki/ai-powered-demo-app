@@ -14,10 +14,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.pierudzki.aipowereddemoapp.core.ResultScreenTexts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FailureScreen(
+    texts: ResultScreenTexts,
     onBackClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -29,7 +31,7 @@ fun FailureScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(text = "Failure") },
+                title = { Text(text = texts.title) },
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
                         Icon(
@@ -42,7 +44,7 @@ fun FailureScreen(
         },
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
-            Text(text = "The calculation took too long and was stopped.")
+            Text(text = texts.message)
         }
     }
 }
@@ -51,6 +53,10 @@ fun FailureScreen(
 @Composable
 private fun FailureScreenPrev() {
     FailureScreen(
+        texts = ResultScreenTexts(
+            title = "Failure",
+            message = "The calculation took too long and was stopped.",
+        ),
         onBackClicked = {},
         modifier = Modifier,
     )

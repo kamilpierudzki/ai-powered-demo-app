@@ -14,10 +14,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.pierudzki.aipowereddemoapp.core.ResultScreenTexts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SuccessScreen(
+    texts: ResultScreenTexts,
     onBackClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -29,7 +31,7 @@ fun SuccessScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(text = "Success") },
+                title = { Text(text = texts.title) },
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
                         Icon(
@@ -42,7 +44,7 @@ fun SuccessScreen(
         },
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
-            Text(text = "Success! Your calculation has finished.")
+            Text(text = texts.message)
         }
     }
 }
@@ -51,6 +53,10 @@ fun SuccessScreen(
 @Composable
 private fun SuccessScreenPrev() {
     SuccessScreen(
+        texts = ResultScreenTexts(
+            title = "Success",
+            message = "Success! Your calculation has finished.",
+        ),
         onBackClicked = {},
         modifier = Modifier,
     )
