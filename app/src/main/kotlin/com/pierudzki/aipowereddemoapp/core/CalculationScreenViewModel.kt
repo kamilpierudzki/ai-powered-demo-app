@@ -30,6 +30,11 @@ class CalculationScreenViewModel(application: Application) : AndroidViewModel(ap
     private var timerJob: Job? = null
     private var calculationJob: Job? = null
 
+    override fun onCleared() {
+        super.onCleared()
+        stopCalculation()
+    }
+
     fun startCalculation(n: Int) {
         val startedAt = SystemClock.elapsedRealtime()
         _calculationDurationSeconds.value = 0
@@ -57,6 +62,10 @@ class CalculationScreenViewModel(application: Application) : AndroidViewModel(ap
             _calculationDurationSeconds.value =
                 ((SystemClock.elapsedRealtime() - startedAt) / 1_000).toInt()
             _isFinished.value = true
+            viewModelScope.launch {
+                delay(1000.milliseconds)
+                _isFinished.value = false
+            }
         }
     }
 

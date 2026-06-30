@@ -63,11 +63,11 @@ class Brain {
         try {
             val conversation = ensureNavigationConversation(activeEngine)
             val message = "Current screen: ${_answer.value.destination.id}.\n${action.prompt}"
-            android.util.Log.d("Brain", "onNewInputAction: message: $message")
+            android.util.Log.d("Brain", "Action: message: $message")
             val response = conversation.sendMessage(message)
-            android.util.Log.d("Brain", "onNewInputAction response: $response")
+            android.util.Log.d("Brain", "Action response: $response")
         } catch (e: Exception) {
-            android.util.Log.d("Brain", "onNewInputAction error: ${e.message}")
+            android.util.Log.d("Brain", "Action error: ${e.message}")
         }
     }
 
@@ -100,7 +100,7 @@ class Brain {
         @Tool(description = "Show the welcome screen with the button that starts the app.")
         fun showWelcomeScreen(): String {
             _answer.value = ShowWelcomeScreen.also {
-                android.util.Log.d("Brain", "$it")
+                android.util.Log.d("Brain", "Tool calling, $it")
             }
             return "Showing the welcome screen."
         }
@@ -111,7 +111,7 @@ class Brain {
             @ToolParam(description = "The current or updated app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowParamsSettingScreen(n = n, appLanguage = appLanguage).also {
-                android.util.Log.d("Brain", "$it")
+                android.util.Log.d("Brain", "Tool calling, $it")
             }
             return "Showing the parameters screen."
         }
@@ -122,7 +122,7 @@ class Brain {
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowCalculationScreen(n = n, appLanguage = appLanguage).also {
-                android.util.Log.d("Brain", "$it")
+                android.util.Log.d("Brain", "Tool calling, $it")
             }
             return "Showing the calculation screen."
         }
@@ -132,7 +132,7 @@ class Brain {
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowSuccessScreen(appLanguage = appLanguage).also {
-                android.util.Log.d("Brain", "$it")
+                android.util.Log.d("Brain", "Tool calling, $it")
             }
             return "Showing the success screen."
         }
@@ -142,7 +142,7 @@ class Brain {
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowFailureScreen(appLanguage = appLanguage).also {
-                android.util.Log.d("Brain", "$it")
+                android.util.Log.d("Brain", "Tool calling, $it")
             }
             return "Showing the failure screen."
         }
