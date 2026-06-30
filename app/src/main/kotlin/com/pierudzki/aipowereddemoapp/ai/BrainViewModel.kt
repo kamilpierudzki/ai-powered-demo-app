@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.pierudzki.aipowereddemoapp.ai.action.Action
 import com.pierudzki.aipowereddemoapp.ai.answer.Answer
+import com.pierudzki.aipowereddemoapp.core.CalculationScreenTexts
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreenTexts
 import com.pierudzki.aipowereddemoapp.core.ResultScreenTexts
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreenUiState
@@ -21,7 +22,7 @@ class BrainViewModel(application: Application) : AndroidViewModel(application) {
     private val brain = Brain()
     val answer: StateFlow<Answer> = brain.answer
     val paramsTexts: StateFlow<ParamsSettingScreenTexts> = brain.paramsTexts
-    val calculationHint: StateFlow<String> = brain.calculationHint
+    val calculationTexts: StateFlow<CalculationScreenTexts> = brain.calculationTexts
     val successTexts: StateFlow<ResultScreenTexts> = brain.successTexts
     val failureTexts: StateFlow<ResultScreenTexts> = brain.failureTexts
 
@@ -62,8 +63,8 @@ class BrainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { brain.generateParamsTexts(language) }
     }
 
-    fun refreshCalculationHint(language: String) {
-        viewModelScope.launch { brain.generateCalculationHint(language) }
+    fun refreshCalculationTexts(language: String) {
+        viewModelScope.launch { brain.generateCalculationTexts(language) }
     }
 
     fun refreshSuccessTexts(language: String) {

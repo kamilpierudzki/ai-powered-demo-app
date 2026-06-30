@@ -71,7 +71,7 @@ fun BrainBasedApp() {
             val values by calculationScreenViewModel.values.collectAsStateWithLifecycle()
             val calculationDurationSeconds by calculationScreenViewModel.calculationDurationSeconds.collectAsStateWithLifecycle()
             val isFinished by calculationScreenViewModel.isFinished.collectAsStateWithLifecycle()
-            val screenHint by brainViewModel.calculationHint.collectAsStateWithLifecycle()
+            val calculationTexts by brainViewModel.calculationTexts.collectAsStateWithLifecycle()
 
             LaunchedEffect(current.n) {
                 calculationScreenViewModel.startCalculation(current.n)
@@ -99,18 +99,17 @@ fun BrainBasedApp() {
                 }
             }
 
-            BackHandler {
-                brainViewModel.onNewInputAction(UserPressedBackButton())
-            }
-
             LaunchedEffect(current.appLanguage) {
-                brainViewModel.refreshCalculationHint(current.appLanguage)
+                brainViewModel.refreshCalculationTexts(current.appLanguage)
             }
 
             CalculationScreen(
-                screenHint = screenHint,
+                texts = calculationTexts,
                 values = values,
                 calculationDurationSeconds = calculationDurationSeconds,
+                onBackClicked = {
+                    brainViewModel.onNewInputAction(UserPressedBackButton())
+                }
             )
         }
 

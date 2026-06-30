@@ -15,6 +15,7 @@ import com.pierudzki.aipowereddemoapp.ai.answer.ShowWelcomeScreen
 import com.pierudzki.aipowereddemoapp.ai.prompt.NavigationPrompt
 import com.pierudzki.aipowereddemoapp.ai.prompt.ScreenTextsPrompts
 import com.pierudzki.aipowereddemoapp.core.AppDestination
+import com.pierudzki.aipowereddemoapp.core.CalculationScreenTexts
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreenTexts
 import com.pierudzki.aipowereddemoapp.core.ResultScreenTexts
 import kotlinx.coroutines.Dispatchers
@@ -35,8 +36,8 @@ class Brain {
     private val _paramsTexts = MutableStateFlow(LOADING_PARAMS_TEXTS)
     val paramsTexts: StateFlow<ParamsSettingScreenTexts> = _paramsTexts.asStateFlow()
 
-    private val _calculationHint = MutableStateFlow(LOADING_TEXT)
-    val calculationHint: StateFlow<String> = _calculationHint.asStateFlow()
+    private val _calculationTexts = MutableStateFlow(LOADING_CALCULATION_TEXTS)
+    val calculationTexts: StateFlow<CalculationScreenTexts> = _calculationTexts.asStateFlow()
 
     private val _successTexts = MutableStateFlow(LOADING_RESULT_TEXTS)
     val successTexts: StateFlow<ResultScreenTexts> = _successTexts.asStateFlow()
@@ -45,7 +46,7 @@ class Brain {
     val failureTexts: StateFlow<ResultScreenTexts> = _failureTexts.asStateFlow()
 
     private var lastParamsTextsLanguage: String? = null
-    private var lastCalculationHintLanguage: String? = null
+    private var lastCalculationTextsLanguage: String? = null
     private var lastSuccessTextsLanguage: String? = null
     private var lastFailureTextsLanguage: String? = null
 
@@ -119,31 +120,30 @@ class Brain {
         }
     }
 
-    suspend fun generateCalculationHint(language: String) = withContext(Dispatchers.IO) {
-        if (language == lastCalculationHintLanguage) return@withContext
-        lastCalculationHintLanguage = language
+    suspend fun generateCalculationTexts(language: String) = withContext(Dispatchers.IO) {
+        if (language == lastCalculationTextsLanguage) return@withContext
+        lastCalculationTextsLanguage = language
+        _calculationTexts.value = calculationTextsFor(ScreenTextsPrompts.calculationTexts(language))
+    }
 
-        val activeEngine = engineWrapper.engine ?: run {
-            _calculationHint.value = FALLBACK_TEXT
-            return@withContext
-        }
-
-        try {
+    private fun calculationTextsFor(prompt: String): CalculationScreenTexts {
+        val activeEngine = engineWrapper.engine ?: return CALCULATION_FALLBACK
+        return try {
             activeEngine.createConversation(
                 ConversationConfig(
-                    systemInstruction = Contents.of(ScreenTextsPrompts.calculationHint(language)),
+                    systemInstruction = Contents.of(prompt),
                     automaticToolCalling = false,
                     samplerConfig = creativeConfig,
                 ),
             ).use { conversation ->
-                val raw = conversation.sendMessage("Propose text.").contents.contents
+                val raw = conversation.sendMessage("Propose texts.").contents.contents
                     .filterIsInstance<Content.Text>()
                     .joinToString("") { it.text }
                     .trim()
-                _calculationHint.value = if (raw.isEmpty()) FALLBACK_TEXT else raw
+                parseCalculationTexts(raw)
             }
         } catch (e: Exception) {
-            _calculationHint.value = FALLBACK_TEXT
+            CALCULATION_FALLBACK
         }
     }
 
@@ -233,6 +233,18 @@ class Brain {
         RESULT_FALLBACK
     }
 
+    private fun parseCalculationTexts(raw: String): CalculationScreenTexts = try {
+        val start = raw.indexOf('{')
+        val end = raw.lastIndexOf('}')
+        val json = JSONObject(raw.substring(start, end + 1))
+        CalculationScreenTexts(
+            title = json.optString("title", CALCULATION_FALLBACK.title),
+            message = json.optString("message", CALCULATION_FALLBACK.message),
+        )
+    } catch (e: Exception) {
+        CALCULATION_FALLBACK
+    }
+
     private companion object {
         const val DEFAULT_APP_LANGUAGE = "English"
         const val DEFAULT_N = 10
@@ -262,6 +274,16 @@ class Brain {
         )
 
         val RESULT_FALLBACK = ResultScreenTexts(
+            title = FALLBACK_TEXT,
+            message = FALLBACK_TEXT,
+        )
+
+        val LOADING_CALCULATION_TEXTS = CalculationScreenTexts(
+            title = LOADING_TEXT,
+            message = LOADING_TEXT,
+        )
+
+        val CALCULATION_FALLBACK = CalculationScreenTexts(
             title = FALLBACK_TEXT,
             message = FALLBACK_TEXT,
         )

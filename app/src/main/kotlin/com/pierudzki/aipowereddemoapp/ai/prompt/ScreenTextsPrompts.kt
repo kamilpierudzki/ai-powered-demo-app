@@ -28,16 +28,25 @@ object ScreenTextsPrompts {
         {"languageHint":"...","changeLanguageButton":"...","nHint":"...","changeNButton":"..."}
         """.trimIndent()
 
-    fun calculationHint(appLanguage: String): String =
+    fun calculationTexts(appLanguage: String): String =
         """
-        You manage an Android mobile app. Suggest a short status text shown on the screen
-        while the app is calculating the Fibonacci sequence. The text tells the user that a
-        calculation is in progress and to please wait. It can be up to 10 words long.
+        You manage an Android mobile app. Suggest text for the screen shown while the app is
+        calculating the Fibonacci sequence.
+
+        These texts are:
+        - A short screen title shown in the top app bar. Up to 3 words.
+        - A short status message telling the user that a calculation is in progress and to
+        please wait. Up to 10 words.
 
         The user wants the text to be in the following language: "${appLanguage}."
 
-        Respond with ONLY the status text itself, as plain text. Do not use JSON, markdown,
-        quotes, labels, or any extra explanation.
+        Respond with ONLY a single minified JSON object, without markdown code fences and
+        without any extra text or explanation. Use exactly these keys and meanings:
+        - "title": the screen title.
+        - "message": the in-progress status message.
+
+        Example of the exact required format:
+        {"title":"...","message":"..."}
         """.trimIndent()
 
     fun successTexts(appLanguage: String): String =
