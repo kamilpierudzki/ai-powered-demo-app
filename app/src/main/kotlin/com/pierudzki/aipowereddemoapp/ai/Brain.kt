@@ -2,13 +2,16 @@ package com.pierudzki.aipowereddemoapp.ai
 
 import android.content.Context
 import com.google.ai.edge.litertlm.Contents
+import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
+import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.SamplerConfig
 import com.google.ai.edge.litertlm.Tool
 import com.google.ai.edge.litertlm.ToolParam
 import com.google.ai.edge.litertlm.ToolSet
 import com.google.ai.edge.litertlm.tool
 import com.pierudzki.aipowereddemoapp.ai.action.Action
+import com.pierudzki.aipowereddemoapp.ai.action.CALCULATION_TIME_LIMIT_SECONDS
 import com.pierudzki.aipowereddemoapp.ai.answer.Answer
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowCalculationScreen
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowFailureScreen
@@ -27,8 +30,7 @@ import kotlinx.coroutines.withContext
 
 class Brain {
 
-    private var appLanguage: String = DEFAULT_APP_LANGUAGE
-    private var n: Int = DEFAULT_N
+    private var navigationConversation: Conversation? = null
 
     private val _answer = MutableStateFlow<Answer>(ShowWelcomeScreen)
     val answer: StateFlow<Answer> = _answer.asStateFlow()
@@ -49,31 +51,37 @@ class Brain {
 
     suspend fun initializeEngine(context: Context) = engineWrapper.initialize(context)
 
-    fun closeEngine() = engineWrapper.close()
+    fun closeEngine() {
+        navigationConversation?.close()
+        navigationConversation = null
+        engineWrapper.close()
+    }
 
     suspend fun onNewInputAction(action: Action) = withContext(Dispatchers.IO) {
         val activeEngine = engineWrapper.engine ?: return@withContext
         try {
-            activeEngine.createConversation(
-                ConversationConfig(
-                    systemInstruction = Contents.of(
-                        NavigationPrompt.build(
-                            currentScreenId = _answer.value.destination.id,
-                            appLanguage = appLanguage,
-                            n = n,
-                            calculationTimeLimitSeconds = CALCULATION_TIME_LIMIT_SECONDS,
-                        )
-                    ),
-                    tools = listOf(navigationToolProvider),
-                    automaticToolCalling = true,
-                    samplerConfig = navigationConfig,
-                ),
-            ).use { conversation ->
-                conversation.sendMessage(action.prompt)
-            }
+            val conversation = ensureNavigationConversation(activeEngine)
+            val message = "Current screen: ${_answer.value.destination.id}.\n${action.prompt}"
+            android.util.Log.d("Brain", "onNewInputAction: $message")
+            conversation.sendMessage(message)
         } catch (e: Exception) {
             android.util.Log.d("Brain", "onNewInputAction error: ${e.message}")
         }
+    }
+
+    private fun ensureNavigationConversation(engine: Engine): Conversation {
+        navigationConversation?.takeIf { it.isAlive }?.let { return it }
+        navigationConversation?.close()
+        return engine.createConversation(
+            ConversationConfig(
+                systemInstruction = Contents.of(
+                    NavigationPrompt.build(calculationTimeLimitSeconds = CALCULATION_TIME_LIMIT_SECONDS)
+                ),
+                tools = listOf(navigationToolProvider),
+                automaticToolCalling = true,
+                samplerConfig = navigationConfig,
+            ),
+        ).also { navigationConversation = it }
     }
 
     suspend fun generateParamsTexts(language: String) = screenTexts.generateParamsTexts(language)
@@ -136,11 +144,5 @@ class Brain {
             }
             return "Showing the failure screen."
         }
-    }
-
-    private companion object {
-        const val DEFAULT_APP_LANGUAGE = "English"
-        const val DEFAULT_N = 10
-        const val CALCULATION_TIME_LIMIT_SECONDS = 10
     }
 }
