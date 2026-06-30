@@ -195,7 +195,11 @@ class Brain {
         appLanguage = json.optString("appLanguage", appLanguage)
         n = json.optInt("n", n)
         when (AppDestination.fromId(json.optString("screen"))) {
-            AppDestination.PARAMS -> ShowParamsSettingScreenAndRefreshTexts(n = n, appLanguage = appLanguage)
+            AppDestination.PARAMS -> ShowParamsSettingScreenAndRefreshTexts(
+                n = n,
+                appLanguage = appLanguage
+            )
+
             AppDestination.WELCOME -> ShowWelcomeScreen
             AppDestination.CALCULATION -> ShowCalculationScreen(n = n, appLanguage = appLanguage)
             AppDestination.SUCCESS -> ShowSuccessScreen(appLanguage = appLanguage)
@@ -212,9 +216,13 @@ class Brain {
         val json = JSONObject(raw.substring(start, end + 1))
         ParamsSettingScreenTexts(
             languageHint = json.optString("languageHint", PARAMS_FALLBACK.languageHint),
-            changeLanguageButton = json.optString("changeLanguageButton", PARAMS_FALLBACK.changeLanguageButton),
+            changeLanguageButton = json.optString(
+                "changeLanguageButton",
+                PARAMS_FALLBACK.changeLanguageButton
+            ),
             nHint = json.optString("nHint", PARAMS_FALLBACK.nHint),
             saveNButton = json.optString("changeNButton", PARAMS_FALLBACK.saveNButton),
+            title = json.optString("title", PARAMS_FALLBACK.title),
             loading = false,
         )
     } catch (e: Exception) {
@@ -257,6 +265,7 @@ class Brain {
             changeLanguageButton = LOADING_TEXT,
             nHint = LOADING_TEXT,
             saveNButton = LOADING_TEXT,
+            title = LOADING_TEXT,
             loading = true,
         )
 
@@ -265,6 +274,7 @@ class Brain {
             changeLanguageButton = FALLBACK_TEXT,
             nHint = FALLBACK_TEXT,
             saveNButton = FALLBACK_TEXT,
+            title = FALLBACK_TEXT,
             loading = false,
         )
 

@@ -7,6 +7,7 @@ object ScreenTextsPrompts {
         You manage an Android mobile app. Suggest text for elements on the app' screen.
 
         These texts are:
+        - A short screen title shown in the top app bar. Up to 3 words.
         - The prompt text for the text field where the user enters the language in which
         the app's on-screen text should appear. This text can be up to 20 words long.
         - The button text that triggers on-screen text updates. This text can be up to 4 words long.
@@ -19,13 +20,14 @@ object ScreenTextsPrompts {
 
         Respond with ONLY a single minified JSON object, without markdown code fences and
         without any extra text or explanation. Use exactly these keys and meanings:
-        - "languageHint": the text field hint for the app language (item 1 above).
-        - "changeLanguageButton": the button text that triggers text updates (item 2 above).
-        - "nHint": the text field hint for the N value (item 3 above).
-        - "changeNButton": the button text that tells the app to update the N value (item 4 above).
+        - "title": the screen title (item 1 above).
+        - "languageHint": the text field hint for the app language (item 2 above).
+        - "changeLanguageButton": the button text that triggers text updates (item 3 above).
+        - "nHint": the text field hint for the N value (item 4 above).
+        - "changeNButton": the button text that tells the app to update the N value (item 5 above).
 
         Example of the exact required format:
-        {"languageHint":"...","changeLanguageButton":"...","nHint":"...","changeNButton":"..."}
+        {"title":"...","languageHint":"...","changeLanguageButton":"...","nHint":"...","changeNButton":"..."}
         """.trimIndent()
 
     fun calculationTexts(appLanguage: String): String =

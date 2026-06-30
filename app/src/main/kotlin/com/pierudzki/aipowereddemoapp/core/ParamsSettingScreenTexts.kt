@@ -5,5 +5,6 @@ data class ParamsSettingScreenTexts(
     val changeLanguageButton: String,
     val nHint: String,
     val saveNButton: String,
+    val title: String,
     val loading: Boolean = false,
 )

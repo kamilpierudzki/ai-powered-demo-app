@@ -1,6 +1,5 @@
 package com.pierudzki.aipowereddemoapp.ai
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -49,12 +48,8 @@ fun BrainBasedApp() {
                 brainViewModel.refreshParamsTexts(current.appLanguage)
             }
 
-            BackHandler {
-                brainViewModel.onNewInputAction(UserPressedBackButton())
-            }
-
             ParamsSettingScreen(
-                screenTexts = screenTexts,
+                texts = screenTexts,
                 appLanguage = current.appLanguage,
                 n = current.n,
                 onAppLanguageChanged = {
@@ -63,6 +58,9 @@ fun BrainBasedApp() {
                 onNextStepClicked = {
                     brainViewModel.onNewInputAction(UserFinishedSettingUpParams(it))
                 },
+                onBackClicked = {
+                    brainViewModel.onNewInputAction(UserPressedBackButton())
+                }
             )
         }
 
