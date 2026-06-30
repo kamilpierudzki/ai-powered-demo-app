@@ -11,7 +11,7 @@ import com.pierudzki.aipowereddemoapp.ai.action.UserPressedBackButton
 import com.pierudzki.aipowereddemoapp.core.AppDestination
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreen
 
-data class ShowParamsSettingScreenAndRefreshTexts(
+data class ShowParamsSettingScreen(
     val n: Int,
     val appLanguage: String,
 ) : Answer {
