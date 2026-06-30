@@ -43,7 +43,7 @@ With a large enough `N`, the naive recursion gets slow and crosses the time limi
 
 ## Architecture
 
-The app is built around a simple, repeating loop: a user interaction becomes an `Action`, the `Brain` consults the LLM, and the LLM produces an `Answer` that selects the next screen.
+The app is built around a simple, repeating loop: a user interaction becomes an `Action`, the `Brain` consults the LLM, and the LLM produces an `Answer` that selects and renders the next screen.
 
 ```mermaid
 flowchart TD
@@ -64,7 +64,7 @@ flowchart TD
 | `Brain` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Brain.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Brain.kt) | Holds app state (`appLanguage`, `n`), turns actions into LLM conversations, parses JSON responses into `Answer`s, and generates per-screen texts. Exposes everything as `StateFlow`. |
 | `EngineWrapper` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineWrapper.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineWrapper.kt) | Owns the LiteRT-LM `Engine` lifecycle and exposes `EngineState` (`Initializing` / `Ready` / `Error`). |
 | `BrainViewModel` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainViewModel.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainViewModel.kt) | `AndroidViewModel` that initializes/closes the engine and serializes navigation actions with a `Mutex`. Text generation runs outside the lock so it never blocks navigation. |
-| `BrainBasedApp` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainBasedApp.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainBasedApp.kt) | Collects the current `Answer` and renders the matching Compose screen, wiring UI events back to actions. |
+| `BrainBasedApp` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainBasedApp.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainBasedApp.kt) | Collects the current `Answer` and delegates rendering to it via `answer.Content(brainViewModel)` — no `when`/branching. Each `Answer` renders its own screen. |
 
 ### Actions (input)
 
@@ -80,6 +80,8 @@ Every interaction implements the `Action` interface ([Action.kt](app/src/main/ko
 ### Answers (output)
 
 The Brain parses the model's JSON into a sealed `Answer` ([Answer.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/answer/Answer.kt)) that maps one-to-one to a screen: `ShowWelcomeScreen`, `ShowParamsSettingScreenAndRefreshTexts`, `ShowCalculationScreen`, `ShowSuccessScreen`, `ShowFailureScreen`.
+
+Each `Answer` renders its own screen. The interface declares a single `@Composable fun Content(brainViewModel: BrainViewModel)`, and every subclass implements it — collecting the state it needs, running its effects, and wiring UI events back to `Action`s. This is a "replace conditional with polymorphism" approach: `BrainBasedApp` contains no `when`/branching and simply calls `answer.Content(brainViewModel)`. Per-screen data such as `n` and `appLanguage` is carried in each `Answer`'s constructor, while the shared `BrainViewModel` (state flows, action dispatch, text refresh) is passed into `Content(...)`.
 
 ### Prompts
 
@@ -111,11 +113,11 @@ app/src/main/kotlin/com/pierudzki/aipowereddemoapp/
 ├── ai/                         # The "Brain" and everything LLM-related
 │   ├── Brain.kt                # State + LLM conversations + response parsing
 │   ├── BrainViewModel.kt       # Engine lifecycle, action serialization
-│   ├── BrainBasedApp.kt        # Renders a screen for the current Answer
+│   ├── BrainBasedApp.kt        # Delegates rendering to the current Answer
 │   ├── EngineWrapper.kt        # LiteRT-LM engine lifecycle and state
 │   ├── ModelConfig.kt          # Model file name and on-device path
 │   ├── action/                 # User/system interactions (Action prompts)
-│   ├── answer/                 # Sealed Answer types (one per screen)
+│   ├── answer/                 # Sealed Answer types; each renders its own screen
 │   └── prompt/                 # NavigationPrompt + ScreenTextsPrompts
 └── core/                       # Compose screens, ViewModels, theme
     ├── MainActivity.kt
