@@ -89,7 +89,9 @@ class Brain {
 
         @Tool(description = "Show the welcome screen with the button that starts the app.")
         fun showWelcomeScreen(): String {
-            _answer.value = ShowWelcomeScreen
+            _answer.value = ShowWelcomeScreen.also {
+                android.util.Log.d("Brain", "$it")
+            }
             return "Showing the welcome screen."
         }
 
@@ -98,9 +100,9 @@ class Brain {
             @ToolParam(description = "The current or updated N value for the Fibonacci sequence.") n: Int,
             @ToolParam(description = "The current or updated app language, for example English or Polish.") appLanguage: String,
         ): String {
-            this@Brain.n = n
-            this@Brain.appLanguage = appLanguage
-            _answer.value = ShowParamsSettingScreen(n = n, appLanguage = appLanguage)
+            _answer.value = ShowParamsSettingScreen(n = n, appLanguage = appLanguage).also {
+                android.util.Log.d("Brain", "$it")
+            }
             return "Showing the parameters screen."
         }
 
@@ -109,21 +111,29 @@ class Brain {
             @ToolParam(description = "The N value for the Fibonacci sequence to compute.") n: Int,
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
-            this@Brain.n = n
-            this@Brain.appLanguage = appLanguage
-            _answer.value = ShowCalculationScreen(n = n, appLanguage = appLanguage)
+            _answer.value = ShowCalculationScreen(n = n, appLanguage = appLanguage).also {
+                android.util.Log.d("Brain", "$it")
+            }
             return "Showing the calculation screen."
         }
 
         @Tool(description = "Show the success screen, used when the Fibonacci calculation finished within the allowed time limit.")
-        fun showSuccessScreen(): String {
-            _answer.value = ShowSuccessScreen(appLanguage = appLanguage)
+        fun showSuccessScreen(
+            @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
+        ): String {
+            _answer.value = ShowSuccessScreen(appLanguage = appLanguage).also {
+                android.util.Log.d("Brain", "$it")
+            }
             return "Showing the success screen."
         }
 
         @Tool(description = "Show the failure screen, used when the Fibonacci calculation ran longer than the allowed time limit and was interrupted.")
-        fun showFailureScreen(): String {
-            _answer.value = ShowFailureScreen(appLanguage = appLanguage)
+        fun showFailureScreen(
+            @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
+        ): String {
+            _answer.value = ShowFailureScreen(appLanguage = appLanguage).also {
+                android.util.Log.d("Brain", "$it")
+            }
             return "Showing the failure screen."
         }
     }
