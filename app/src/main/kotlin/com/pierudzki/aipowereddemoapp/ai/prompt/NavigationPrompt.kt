@@ -36,15 +36,14 @@ object NavigationPrompt {
         Time limit - the most important rule on the calculation screen:
         The calculation must finish within $calculationTimeLimitSeconds seconds. While it runs, every
         message tells you how many seconds it has been running so far and repeats the time limit.
-        Compare these two numbers on every single message and act on the result, even if you chose to
-        stay on the calculation screen on previous turns:
+        Compare these two numbers on every single message and act on the result, even if you replied
+        WAIT on previous turns:
         - If the running seconds are less than or equal to the time limit, the calculation is still in
-          time: stay on the calculation screen by calling the calculation function again with the
-          current N and app language.
+          time: do NOT call any function. Reply with exactly the single word WAIT and nothing else.
         - If the running seconds are greater than the time limit, the calculation has taken too long:
           you MUST go to the failure screen. Do not stay on the calculation screen.
         Re-evaluate this comparison every turn; once the running time passes the limit you must switch
-        to the failure screen even if you stayed on the calculation screen on earlier turns.
+        to the failure screen even if you replied WAIT on earlier turns.
         Example: ${calculationTimeLimitSeconds + 2} seconds is more than the $calculationTimeLimitSeconds second limit, so go to the failure screen.
 
         Other rules:
@@ -60,7 +59,9 @@ object NavigationPrompt {
         - When the user presses the back button while on the success or failure screen, go to the
           params screen.
 
-        Call exactly one navigation function that matches the next screen. Do not output any text,
-        explanation, or JSON; navigate only through the function call.
+        To change screens, call exactly one navigation function and output no text, explanation, or
+        JSON. The only exception: on the calculation screen while the calculation is still within the
+        time limit, do not call any function and reply with the single word WAIT. In every other
+        situation, navigate only through a function call.
         """.trimIndent()
 }
