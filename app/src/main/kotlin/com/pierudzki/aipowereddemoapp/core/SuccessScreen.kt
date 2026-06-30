@@ -1,4 +1,4 @@
-package com.pierudzki.aipowereddemoapp.core.ui
+package com.pierudzki.aipowereddemoapp.core
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.pierudzki.aipowereddemoapp.core.ResultScreenTexts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -21,8 +21,8 @@ import com.pierudzki.aipowereddemoapp.core.CalculationScreen
 import com.pierudzki.aipowereddemoapp.core.CalculationScreenViewModel
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreen
 import com.pierudzki.aipowereddemoapp.core.WelcomeScreen
-import com.pierudzki.aipowereddemoapp.core.ui.FailureScreen
-import com.pierudzki.aipowereddemoapp.core.ui.SuccessScreen
+import com.pierudzki.aipowereddemoapp.core.FailureScreen
+import com.pierudzki.aipowereddemoapp.core.SuccessScreen
 
 @Composable
 fun BrainBasedApp() {
