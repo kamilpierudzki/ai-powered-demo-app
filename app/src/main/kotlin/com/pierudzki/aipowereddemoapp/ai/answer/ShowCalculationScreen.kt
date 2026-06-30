@@ -10,6 +10,7 @@ import com.pierudzki.aipowereddemoapp.ai.BrainViewModel
 import com.pierudzki.aipowereddemoapp.ai.action.CalculationDurationUpdated
 import com.pierudzki.aipowereddemoapp.ai.action.CalculationFinished
 import com.pierudzki.aipowereddemoapp.ai.action.UserPressedBackButton
+import com.pierudzki.aipowereddemoapp.core.AppDestination
 import com.pierudzki.aipowereddemoapp.core.CalculationScreen
 import com.pierudzki.aipowereddemoapp.core.CalculationScreenViewModel
 
@@ -17,6 +18,8 @@ data class ShowCalculationScreen(
     val n: Int,
     val appLanguage: String,
 ) : Answer {
+    override val destination: AppDestination get() = AppDestination.CALCULATION
+
     @Composable
     override fun Content(brainViewModel: BrainViewModel) {
         val calculationScreenViewModel: CalculationScreenViewModel = viewModel()

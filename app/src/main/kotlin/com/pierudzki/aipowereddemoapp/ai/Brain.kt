@@ -5,6 +5,10 @@ import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.SamplerConfig
+import com.google.ai.edge.litertlm.Tool
+import com.google.ai.edge.litertlm.ToolParam
+import com.google.ai.edge.litertlm.ToolSet
+import com.google.ai.edge.litertlm.tool
 import com.pierudzki.aipowereddemoapp.ai.action.Action
 import com.pierudzki.aipowereddemoapp.ai.answer.Answer
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowCalculationScreen
@@ -14,7 +18,6 @@ import com.pierudzki.aipowereddemoapp.ai.answer.ShowSuccessScreen
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowWelcomeScreen
 import com.pierudzki.aipowereddemoapp.ai.prompt.NavigationPrompt
 import com.pierudzki.aipowereddemoapp.ai.prompt.ScreenTextsPrompts
-import com.pierudzki.aipowereddemoapp.core.AppDestination
 import com.pierudzki.aipowereddemoapp.core.CalculationScreenTexts
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreenTexts
 import com.pierudzki.aipowereddemoapp.core.ResultScreenTexts
@@ -54,6 +57,8 @@ class Brain {
     private val navigationConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = 0.2)
     private val creativeConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = 1.0)
 
+    private val navigationToolProvider = tool(NavigationTools())
+
     private val engineWrapper = EngineWrapper()
 
     val engineState: StateFlow<EngineState> = engineWrapper.state
@@ -69,22 +74,18 @@ class Brain {
                 ConversationConfig(
                     systemInstruction = Contents.of(
                         NavigationPrompt.build(
-                            currentScreenId = currentScreenId(),
+                            currentScreenId = _answer.value.destination.id,
                             appLanguage = appLanguage,
                             n = n,
                             calculationTimeLimitSeconds = CALCULATION_TIME_LIMIT_SECONDS,
                         )
                     ),
-                    automaticToolCalling = false,
+                    tools = listOf(navigationToolProvider),
+                    automaticToolCalling = true,
                     samplerConfig = navigationConfig,
                 ),
             ).use { conversation ->
-                val response = conversation.sendMessage(action.prompt)
-                val text = response.contents.contents
-                    .filterIsInstance<Content.Text>()
-                    .joinToString("") { it.text }
-                    .trim()
-                _answer.value = parse(text)
+                conversation.sendMessage(action.prompt)
             }
         } catch (e: Exception) {
             android.util.Log.d("Brain", "onNewInputAction error: ${e.message}")
@@ -180,34 +181,47 @@ class Brain {
         }
     }
 
-    private fun currentScreenId(): String = when (_answer.value) {
-        is ShowWelcomeScreen -> AppDestination.WELCOME.id
-        is ShowParamsSettingScreenAndRefreshTexts -> AppDestination.PARAMS.id
-        is ShowCalculationScreen -> AppDestination.CALCULATION.id
-        is ShowSuccessScreen -> AppDestination.SUCCESS.id
-        is ShowFailureScreen -> AppDestination.FAILURE.id
-    }
+    private inner class NavigationTools : ToolSet {
 
-    private fun parse(raw: String): Answer = try {
-        val start = raw.indexOf('{')
-        val end = raw.lastIndexOf('}')
-        val json = JSONObject(raw.substring(start, end + 1))
-        appLanguage = json.optString("appLanguage", appLanguage)
-        n = json.optInt("n", n)
-        when (AppDestination.fromId(json.optString("screen"))) {
-            AppDestination.PARAMS -> ShowParamsSettingScreenAndRefreshTexts(
-                n = n,
-                appLanguage = appLanguage
-            )
-
-            AppDestination.WELCOME -> ShowWelcomeScreen
-            AppDestination.CALCULATION -> ShowCalculationScreen(n = n, appLanguage = appLanguage)
-            AppDestination.SUCCESS -> ShowSuccessScreen(appLanguage = appLanguage)
-            AppDestination.FAILURE -> ShowFailureScreen(appLanguage = appLanguage)
-            null -> _answer.value
+        @Tool(description = "Show the welcome screen with the button that starts the app.")
+        fun showWelcomeScreen(): String {
+            _answer.value = ShowWelcomeScreen
+            return "Showing the welcome screen."
         }
-    } catch (e: Exception) {
-        _answer.value
+
+        @Tool(description = "Show the parameters screen where the user sets the app language and the N value for the Fibonacci sequence.")
+        fun showParamsScreen(
+            @ToolParam(description = "The current or updated N value for the Fibonacci sequence.") n: Int,
+            @ToolParam(description = "The current or updated app language, for example English or Polish.") appLanguage: String,
+        ): String {
+            this@Brain.n = n
+            this@Brain.appLanguage = appLanguage
+            _answer.value = ShowParamsSettingScreenAndRefreshTexts(n = n, appLanguage = appLanguage)
+            return "Showing the parameters screen."
+        }
+
+        @Tool(description = "Show the calculation screen that runs the Fibonacci calculation for N and shows the produced values.")
+        fun showCalculationScreen(
+            @ToolParam(description = "The N value for the Fibonacci sequence to compute.") n: Int,
+            @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
+        ): String {
+            this@Brain.n = n
+            this@Brain.appLanguage = appLanguage
+            _answer.value = ShowCalculationScreen(n = n, appLanguage = appLanguage)
+            return "Showing the calculation screen."
+        }
+
+        @Tool(description = "Show the success screen, used when the Fibonacci calculation finished within the allowed time limit.")
+        fun showSuccessScreen(): String {
+            _answer.value = ShowSuccessScreen(appLanguage = appLanguage)
+            return "Showing the success screen."
+        }
+
+        @Tool(description = "Show the failure screen, used when the Fibonacci calculation ran longer than the allowed time limit and was interrupted.")
+        fun showFailureScreen(): String {
+            _answer.value = ShowFailureScreen(appLanguage = appLanguage)
+            return "Showing the failure screen."
+        }
     }
 
     private fun parseParamsTexts(raw: String): ParamsSettingScreenTexts = try {

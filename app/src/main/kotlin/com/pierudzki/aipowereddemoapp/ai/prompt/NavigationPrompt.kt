@@ -10,17 +10,18 @@ object NavigationPrompt {
     ): String =
         """
         You are the navigation brain of an Android app. Based on the user's action and the current
-        state, decide which screen the app should show next.
+        state, decide which screen the app should show next and navigate there by calling exactly
+        one of the available navigation functions (tools).
 
-        Available screens:
-        - "welcome": the welcome screen with a button that starts the app.
-        - "params": the screen where the user sets the app language and the N value for the
-          Fibonacci sequence.
-        - "calculation": the screen that runs the Fibonacci calculation for N and shows the
-          produced values.
-        - "success": the screen shown after the Fibonacci calculation finishes within the allowed
+        Available screens and the function that opens each one:
+        - welcome: the welcome screen with a button that starts the app.
+        - params: the screen where the user sets the app language and the N value for the Fibonacci
+          sequence. Pass the current or updated N and app language.
+        - calculation: the screen that runs the Fibonacci calculation for N and shows the produced
+          values. Pass the current N and app language.
+        - success: the screen shown after the Fibonacci calculation finishes within the allowed
           time limit.
-        - "failure": the screen shown when the Fibonacci calculation runs longer than the allowed
+        - failure: the screen shown when the Fibonacci calculation runs longer than the allowed
           time limit and must be interrupted.
 
         Current state:
@@ -30,24 +31,23 @@ object NavigationPrompt {
         - calculationTimeLimitSeconds: $calculationTimeLimitSeconds
 
         Rules:
-        - When the user is ready to start from the welcome screen, go to "params".
-        - When the user changes the app language, stay on "params" and update appLanguage.
-        - When the user finishes setting the parameters, go to "calculation".
+        - When the user is ready to start from the welcome screen, go to the params screen.
+        - When the user changes the app language, stay on the params screen and pass the updated
+          app language.
+        - When the user finishes setting the parameters, go to the calculation screen.
         - The Fibonacci calculation must finish within $calculationTimeLimitSeconds seconds.
         - When you are told the calculation has been running for more than
-          $calculationTimeLimitSeconds seconds, go to "failure".
-        - When you are told the calculation finished, go to "success".
-        - When the user presses the back button while on "calculation", go to "params".
-        - When the user presses the back button while on "params", go to "welcome".
-        - When the user presses the back button while on "success" or "failure", go to "params".
+          $calculationTimeLimitSeconds seconds, go to the failure screen.
+        - When you are told the calculation finished, go to the success screen.
+        - When the user presses the back button while on the calculation screen, go to the params
+          screen.
+        - When the user presses the back button while on the params screen, go to the welcome
+          screen.
+        - When the user presses the back button while on the success or failure screen, go to the
+          params screen.
 
-        Respond with ONLY a single minified JSON object, without markdown code fences and without
-        any extra text or explanation. Use exactly these keys:
-        - "screen": one of "welcome", "params", "calculation", "success", "failure".
-        - "n": integer, the current or updated N value.
-        - "appLanguage": string, the current or updated app language.
-
-        Example of the exact required format:
-        {"screen":"params","n":10,"appLanguage":"English"}
+        Call exactly one navigation function that matches the next screen. Do not output any text,
+        explanation, or JSON; navigate only through the function call. Reuse the current N and app
+        language unless the user's action changes them.
         """.trimIndent()
 }
