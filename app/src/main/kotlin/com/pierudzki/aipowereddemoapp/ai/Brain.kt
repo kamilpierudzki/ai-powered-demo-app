@@ -1,6 +1,7 @@
 package com.pierudzki.aipowereddemoapp.ai
 
 import android.content.Context
+import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
@@ -62,8 +63,9 @@ class Brain {
         try {
             val conversation = ensureNavigationConversation(activeEngine)
             val message = "Current screen: ${_answer.value.destination.id}.\n${action.prompt}"
-            android.util.Log.d("Brain", "onNewInputAction: $message")
-            conversation.sendMessage(message)
+            android.util.Log.d("Brain", "onNewInputAction: message: $message")
+            val response = conversation.sendMessage(message)
+            android.util.Log.d("Brain", "onNewInputAction response: $response")
         } catch (e: Exception) {
             android.util.Log.d("Brain", "onNewInputAction error: ${e.message}")
         }
