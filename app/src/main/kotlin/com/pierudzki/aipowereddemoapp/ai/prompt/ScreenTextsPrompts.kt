@@ -4,27 +4,30 @@ object ScreenTextsPrompts {
 
     fun paramsTexts(appLanguage: String): String =
         """
-        You manage an Android mobile app. Suggest text for elements on the app' screen.
-
-        These texts are:
-        - A short screen title shown in the top app bar. Up to 3 words.
-        - The prompt text for the text field where the user enters the language in which
-        the app's on-screen text should appear. This text can be up to 20 words long.
-        - The button text that triggers on-screen text updates. This text can be up to 4 words long.
-        - The prompt text for the text field where the user enters the selected value N for
-        the Fibonacci sequence. The prompt text can be up to 20 words long.
-        - The button text that updates the value N selected by the user in the app's memory.
-        This text can be up to 4 words long. This button triggers the calculation of the Fibonacci.
+        You manage an Android mobile app. Suggest text for elements on the app screen.
+        The screen contains two text fields. The first text field accepts the name of 
+        the language in which the app's text should be generated. The second text field accepts
+        the N value for the Fibonacci sequence.
+        
+        These text fields are:
+        - A short title displayed in the app's top bar. Up to 4 words long.
+        - A prompt text for the text field, where the user enters the language in which
+        the app's text should be displayed on the screen. This text can be up to 20 words long.
+        - A button text that triggers an on-screen text update. This text can be up to 4 words long.
+        - A prompt text for the text field, where the user enters the selected N value for
+        the Fibonacci sequence. This prompt text can be up to 20 words long.
+        - A button text that updates the user-selected N value in the app's memory. 
+        This text can be up to 4 words long. This button takes the user to another screen and starts
+        the Fibonacci sequence calculation.
 
         The user wants the text to be in the following language: "${appLanguage}."
-
-        Respond with ONLY a single minified JSON object, without markdown code fences and
-        without any extra text or explanation. Use exactly these keys and meanings:
-        - "title": the screen title (item 1 above).
-        - "languageHint": the text field hint for the app language (item 2 above).
-        - "changeLanguageButton": the button text that triggers text updates (item 3 above).
-        - "nHint": the text field hint for the N value (item 4 above).
-        - "changeNButton": the button text that tells the app to update the N value (item 5 above).
+        
+        Response with ONLY a single, minified JSON object, without Markdown constraints and without any additional text or explanation. Use these keys and meanings exactly:
+        - "title": the screen title (point 1 above).
+        - "languageHint": the text box hint for the app language (point 2 above).
+        - "changeLanguageButton": the text box text that triggers the text update (point 3 above).
+        - "nHint": the text box hint for the N value (point 4 above).
+        - "changeNButton": the text box text that tells the app to update the N value (point 5 above).
 
         Example of the exact required format:
         {"title":"...","languageHint":"...","changeLanguageButton":"...","nHint":"...","changeNButton":"..."}
