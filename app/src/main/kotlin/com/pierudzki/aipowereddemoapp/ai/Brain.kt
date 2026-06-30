@@ -12,7 +12,7 @@ import com.pierudzki.aipowereddemoapp.ai.action.Action
 import com.pierudzki.aipowereddemoapp.ai.answer.Answer
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowCalculationScreen
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowFailureScreen
-import com.pierudzki.aipowereddemoapp.ai.answer.ShowParamsSettingScreenAndRefreshTexts
+import com.pierudzki.aipowereddemoapp.ai.answer.ShowParamsSettingScreen
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowSuccessScreen
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowWelcomeScreen
 import com.pierudzki.aipowereddemoapp.ai.prompt.NavigationPrompt
@@ -78,7 +78,8 @@ class Brain {
 
     suspend fun generateParamsTexts(language: String) = screenTexts.generateParamsTexts(language)
 
-    suspend fun generateCalculationTexts(language: String) = screenTexts.generateCalculationTexts(language)
+    suspend fun generateCalculationTexts(language: String) =
+        screenTexts.generateCalculationTexts(language)
 
     suspend fun generateSuccessTexts(language: String) = screenTexts.generateSuccessTexts(language)
 
@@ -99,7 +100,7 @@ class Brain {
         ): String {
             this@Brain.n = n
             this@Brain.appLanguage = appLanguage
-            _answer.value = ShowParamsSettingScreenAndRefreshTexts(n = n, appLanguage = appLanguage)
+            _answer.value = ShowParamsSettingScreen(n = n, appLanguage = appLanguage)
             return "Showing the parameters screen."
         }
 
