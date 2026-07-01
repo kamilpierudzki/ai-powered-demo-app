@@ -53,14 +53,16 @@ class Brain {
     suspend fun initializeEngine(context: Context) = engineWrapper.initialize(context)
 
     fun closeEngine() {
-        navigationConversation?.close()
-        navigationConversation = null
+        resetNavigationConversation()
         engineWrapper.close()
     }
 
     suspend fun onNewInputAction(action: Action) = withContext(Dispatchers.IO) {
         val activeEngine = engineWrapper.engine ?: return@withContext
         try {
+            if (action.startsFreshNavigationConversation) {
+                resetNavigationConversation()
+            }
             val conversation = ensureNavigationConversation(activeEngine)
             val message = "Current screen: ${_answer.value.destination.id}.\n${action.prompt}"
             android.util.Log.d("Brain", "Action: message: $message")
@@ -69,6 +71,11 @@ class Brain {
         } catch (e: Exception) {
             android.util.Log.d("Brain", "Action error: ${e.message}")
         }
+    }
+
+    private fun resetNavigationConversation() {
+        navigationConversation?.close()
+        navigationConversation = null
     }
 
     private fun ensureNavigationConversation(engine: Engine): Conversation {

@@ -33,7 +33,9 @@ data class ShowParamsSettingScreen(
                 brainViewModel.onNewInputAction(UserChangedAppLanguage(it))
             },
             onNextStepClicked = {
-                brainViewModel.onNewInputAction(UserFinishedSettingUpParams(it))
+                brainViewModel.onNewInputAction(
+                    UserFinishedSettingUpParams(n = it, appLanguage = appLanguage)
+                )
             },
             onBackClicked = {
                 brainViewModel.onNewInputAction(UserPressedBackButton())

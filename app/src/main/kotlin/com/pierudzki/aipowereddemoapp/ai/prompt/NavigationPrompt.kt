@@ -33,18 +33,26 @@ object NavigationPrompt {
         Every user message begins with the current screen, for example: "Current screen: calculation."
         Trust it as the source of truth for where the app is right now and apply the rules below.
 
-        Time limit - the most important rule on the calculation screen:
-        The calculation must finish within $calculationTimeLimitSeconds seconds. While it runs, every
-        message tells you how many seconds it has been running so far and repeats the time limit.
-        Compare these two numbers on every single message and act on the result, even if you replied
-        WAIT on previous turns:
-        - If the running seconds are less than or equal to the time limit, the calculation is still in
-          time: do NOT call any function. Reply with exactly the single word WAIT and nothing else.
-        - If the running seconds are greater than the time limit, the calculation has taken too long:
-          you MUST go to the failure screen. Do not stay on the calculation screen.
-        Re-evaluate this comparison every turn; once the running time passes the limit you must switch
-        to the failure screen even if you replied WAIT on earlier turns.
-        Example: ${calculationTimeLimitSeconds + 2} seconds is more than the $calculationTimeLimitSeconds second limit, so go to the failure screen.
+        Time limit - the single most important rule on the calculation screen:
+        The Fibonacci calculation has a HARD limit of exactly $calculationTimeLimitSeconds seconds. This limit
+        is fixed, never changes, and is defined ONLY here. The messages during the calculation will NOT
+        repeat it, so you must keep it in mind at all times: the limit is $calculationTimeLimitSeconds seconds.
+
+        While the calculation runs, every message on the calculation screen reports a single number: how many
+        seconds it has been running so far. On EVERY such message you MUST compare that elapsed number against
+        the $calculationTimeLimitSeconds second limit and act immediately, even if you replied WAIT before:
+        - Elapsed seconds <= $calculationTimeLimitSeconds: still within the limit. Do NOT call any function.
+          Reply with exactly the single word WAIT and nothing else.
+        - Elapsed seconds > $calculationTimeLimitSeconds: the limit has been exceeded. You MUST immediately go to
+          the failure screen. Never stay on the calculation screen and never reply WAIT once the limit is passed.
+        Re-evaluate this comparison on every single turn; the moment the elapsed time is greater than
+        $calculationTimeLimitSeconds, switch to the failure screen regardless of earlier WAIT replies.
+        Examples (limit = $calculationTimeLimitSeconds s): ${calculationTimeLimitSeconds - 1} -> WAIT, $calculationTimeLimitSeconds -> WAIT, ${calculationTimeLimitSeconds + 1} -> failure screen.
+
+        Each calculation run is independent. When a new calculation starts (the user confirms parameters
+        again and a fresh run begins), its elapsed-time counter restarts at 0 seconds. Judge every run
+        only by its own "seconds so far" values and ignore the timing, WAIT replies, and outcome of any
+        earlier run - a previous failure never means the current run has already passed the limit.
 
         Other rules:
         - When the user is ready to start from the welcome screen, go to the params screen.
