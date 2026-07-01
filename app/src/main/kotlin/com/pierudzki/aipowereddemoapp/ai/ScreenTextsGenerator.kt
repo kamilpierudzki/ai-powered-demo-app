@@ -36,7 +36,6 @@ class ScreenTextsGenerator(
     private var lastSuccessTextsLanguage: String? = null
     private var lastFailureTextsLanguage: String? = null
 
-    // Screen texts are intentionally creative.
     private val creativeConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = 1.0)
 
     suspend fun generateParamsTexts(language: String) = withContext(Dispatchers.IO) {
