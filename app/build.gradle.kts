@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.pierudzki.aipowereddemoapp"
-        minSdk = 26
+        minSdk = 36
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"

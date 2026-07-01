@@ -92,17 +92,17 @@ Each `Answer` renders its own screen. The interface declares a single `@Composab
 
 ## Tech stack
 
-| Area | Choice |
-| --- | --- |
-| Language | Kotlin 2.2.10 |
-| UI | Jetpack Compose, Material 3 |
-| On-device AI | Google AI Edge LiteRT-LM `0.13.1` |
-| Model | Gemma (`gemma-4-E4B-it.litertlm`) |
-| Architecture | MVVM, `StateFlow`, Kotlin coroutines |
-| Build | Android Gradle Plugin 9.2.1, Gradle 9.4.1 |
-| SDK | `compileSdk 37`, `minSdk 26`, `targetSdk 36` |
-| Java | 11 (with core library desugaring) |
-| License | Apache 2.0 |
+| Area | Choice                                       |
+| --- |----------------------------------------------|
+| Language | Kotlin 2.2.10                                |
+| UI | Jetpack Compose, Material 3                  |
+| On-device AI | Google AI Edge LiteRT-LM `0.13.1`            |
+| Model | Gemma (`gemma-4-E4B-it.litertlm`)            |
+| Architecture | MVVM, `StateFlow`, Kotlin coroutines         |
+| Build | Android Gradle Plugin 9.2.1, Gradle 9.4.1    |
+| SDK | `compileSdk 37`, `minSdk 36`, `targetSdk 36` |
+| Java | 11 (with core library desugaring)            |
+| License | Apache 2.0                                   |
 
 ---
 
@@ -134,7 +134,7 @@ app/src/main/kotlin/com/pierudzki/aipowereddemoapp/
 
 - **Android Studio** (latest stable) or the Android command-line tools with the Gradle wrapper.
 - **JDK 11+**.
-- A **physical device or emulator** running **Android 8.0 (API 26)** or higher.
+- A **physical device or emulator** running **Android 16.0 (API 36)** or higher.
 - A **GPU-capable device is recommended.** The engine defaults to `Backend.GPU()` in [EngineWrapper.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineWrapper.kt). On devices without a usable GPU, switch to `Backend.CPU()` there.
 - `adb` available on your `PATH` (to push the model file).
 
