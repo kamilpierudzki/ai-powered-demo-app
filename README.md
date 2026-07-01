@@ -110,22 +110,25 @@ Each `Answer` renders its own screen. The interface declares a single `@Composab
 
 ```text
 app/src/main/kotlin/com/pierudzki/aipowereddemoapp/
-├── ai/                         # The "Brain" and everything LLM-related
-│   ├── Brain.kt                # Navigation conversation (recreated per run) + tools
-│   ├── BrainViewModel.kt       # Engine lifecycle, action serialization
-│   ├── BrainBasedApp.kt        # Delegates rendering to the current Answer
-│   ├── EngineWrapper.kt        # LiteRT-LM engine lifecycle and state
-│   ├── ModelConfig.kt          # Model file name and on-device path
-│   ├── action/                 # User/system interactions (Action prompts)
-│   ├── answer/                 # Sealed Answer types; each renders its own screen
-│   └── prompt/                 # NavigationPrompt + ScreenTextsPrompts
-└── core/                       # Compose screens, ViewModels, theme
+├── ai/                          # The "Brain" and everything LLM-related
+│   ├── Brain.kt                 # Navigation conversation (recreated per run) + tools
+│   ├── BrainViewModel.kt        # Engine lifecycle, action serialization
+│   ├── BrainBasedApp.kt         # Delegates rendering to the current Answer
+│   ├── EngineWrapper.kt         # LiteRT-LM engine lifecycle and state
+│   ├── ScreenTextsGenerator.kt  # Generates localized per-screen texts (high temp)
+│   ├── ModelConfig.kt           # Model file name and on-device path
+│   ├── action/                  # User/system interactions (Action prompts)
+│   ├── answer/                  # Sealed Answer types; each renders its own screen
+│   └── prompt/                  # NavigationPrompt + ScreenTextsPrompts
+└── core/                        # Compose UI: screens, ViewModel, texts, theme
     ├── MainActivity.kt
+    ├── AppDestination.kt         # Screen catalog (enum: id + description)
     ├── WelcomeScreen.kt
     ├── ParamsSettingScreen.kt
     ├── CalculationScreen.kt + CalculationScreenViewModel.kt
-    ├── ui/ (SuccessScreen, FailureScreen, theme/)
-    └── *Texts.kt               # Data classes holding AI-generated texts
+    ├── SuccessScreen.kt, FailureScreen.kt
+    ├── *Texts.kt                 # Data classes holding AI-generated texts
+    └── ui/theme/                 # Material 3 color, type, theme
 ```
 
 ---
