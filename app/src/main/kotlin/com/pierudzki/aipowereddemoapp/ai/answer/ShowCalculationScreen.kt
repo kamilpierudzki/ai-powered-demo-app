@@ -6,7 +6,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.pierudzki.aipowereddemoapp.ai.BrainViewModel
+import com.pierudzki.aipowereddemoapp.ai.AgentViewModel
 import com.pierudzki.aipowereddemoapp.ai.action.CalculationDurationUpdated
 import com.pierudzki.aipowereddemoapp.ai.action.CalculationFinished
 import com.pierudzki.aipowereddemoapp.ai.action.UserPressedBackButton
@@ -21,12 +21,12 @@ data class ShowCalculationScreen(
     override val destination: AppDestination get() = AppDestination.CALCULATION
 
     @Composable
-    override fun Content(brainViewModel: BrainViewModel) {
+    override fun Content(agentViewModel: AgentViewModel) {
         val calculationScreenViewModel: CalculationScreenViewModel = viewModel()
         val values by calculationScreenViewModel.values.collectAsStateWithLifecycle()
         val calculationDurationSeconds by calculationScreenViewModel.calculationDurationSeconds.collectAsStateWithLifecycle()
         val isFinished by calculationScreenViewModel.isFinished.collectAsStateWithLifecycle()
-        val calculationTexts by brainViewModel.calculationTexts.collectAsStateWithLifecycle()
+        val calculationTexts by agentViewModel.calculationTexts.collectAsStateWithLifecycle()
 
         LaunchedEffect(n) {
             calculationScreenViewModel.startCalculation(n)
@@ -34,7 +34,7 @@ data class ShowCalculationScreen(
 
         LaunchedEffect(calculationDurationSeconds) {
             if (calculationDurationSeconds > 0) {
-                brainViewModel.onNewInputAction(
+                agentViewModel.onNewInputAction(
                     CalculationDurationUpdated(
                         calculationDurationSeconds
                     )
@@ -44,7 +44,7 @@ data class ShowCalculationScreen(
 
         LaunchedEffect(isFinished) {
             if (isFinished) {
-                brainViewModel.onNewInputAction(CalculationFinished(calculationDurationSeconds))
+                agentViewModel.onNewInputAction(CalculationFinished(calculationDurationSeconds))
             }
         }
 
@@ -55,7 +55,7 @@ data class ShowCalculationScreen(
         }
 
         LaunchedEffect(appLanguage) {
-            brainViewModel.refreshCalculationTexts(appLanguage)
+            agentViewModel.refreshCalculationTexts(appLanguage)
         }
 
         CalculationScreen(
@@ -63,7 +63,7 @@ data class ShowCalculationScreen(
             values = values,
             calculationDurationSeconds = calculationDurationSeconds,
             onBackClicked = {
-                brainViewModel.onNewInputAction(UserPressedBackButton())
+                agentViewModel.onNewInputAction(UserPressedBackButton())
             }
         )
     }

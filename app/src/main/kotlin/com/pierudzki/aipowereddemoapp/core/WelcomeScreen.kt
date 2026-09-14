@@ -83,7 +83,7 @@ fun WelcomeScreen(
                     onClick = onStartClicked,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
-                    Text("Start the Brain")
+                    Text("Start the Agent")
                 }
             }
         }

@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pierudzki.aipowereddemoapp.ai.BrainViewModel
+import com.pierudzki.aipowereddemoapp.ai.AgentViewModel
 import com.pierudzki.aipowereddemoapp.ai.action.UserChangedAppLanguage
 import com.pierudzki.aipowereddemoapp.ai.action.UserFinishedSettingUpParams
 import com.pierudzki.aipowereddemoapp.ai.action.UserPressedBackButton
@@ -18,11 +18,11 @@ data class ShowParamsSettingScreen(
     override val destination: AppDestination get() = AppDestination.PARAMS
 
     @Composable
-    override fun Content(brainViewModel: BrainViewModel) {
-        val screenTexts by brainViewModel.paramsTexts.collectAsStateWithLifecycle()
+    override fun Content(agentViewModel: AgentViewModel) {
+        val screenTexts by agentViewModel.paramsTexts.collectAsStateWithLifecycle()
 
         LaunchedEffect(appLanguage) {
-            brainViewModel.refreshParamsTexts(appLanguage)
+            agentViewModel.refreshParamsTexts(appLanguage)
         }
 
         ParamsSettingScreen(
@@ -30,15 +30,15 @@ data class ShowParamsSettingScreen(
             appLanguage = appLanguage,
             n = n,
             onAppLanguageChanged = {
-                brainViewModel.onNewInputAction(UserChangedAppLanguage(it))
+                agentViewModel.onNewInputAction(UserChangedAppLanguage(it))
             },
             onNextStepClicked = {
-                brainViewModel.onNewInputAction(
+                agentViewModel.onNewInputAction(
                     UserFinishedSettingUpParams(n = it, appLanguage = appLanguage)
                 )
             },
             onBackClicked = {
-                brainViewModel.onNewInputAction(UserPressedBackButton())
+                agentViewModel.onNewInputAction(UserPressedBackButton())
             }
         )
     }

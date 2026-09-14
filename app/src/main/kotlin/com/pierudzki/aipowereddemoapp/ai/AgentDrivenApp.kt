@@ -6,8 +6,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun BrainBasedApp() {
-    val brainViewModel: BrainViewModel = viewModel()
-    val answer by brainViewModel.answer.collectAsStateWithLifecycle()
-    answer.Content(brainViewModel)
+fun AgentDrivenApp() {
+    val agentViewModel: AgentViewModel = viewModel()
+    val answer by agentViewModel.answer.collectAsStateWithLifecycle()
+    answer.Content(agentViewModel)
 }

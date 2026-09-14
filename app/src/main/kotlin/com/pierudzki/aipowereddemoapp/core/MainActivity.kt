@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.pierudzki.aipowereddemoapp.ai.BrainBasedApp
+import com.pierudzki.aipowereddemoapp.ai.AgentDrivenApp
 import com.pierudzki.aipowereddemoapp.core.ui.theme.AIPPoweredDemoAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AIPPoweredDemoAppTheme {
-                BrainBasedApp()
+                AgentDrivenApp()
             }
         }
     }

@@ -34,7 +34,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-class Brain {
+class Agent {
 
     // Written only by the turn holding navigationMutex, under conversationLock; read by close()
     // under conversationLock. Invariant at every monitor boundary: null or alive.
@@ -50,7 +50,7 @@ class Brain {
     private val engineHolder = EngineHolder()
     private val screenTexts = ScreenTextsGenerator(engineHolder)
 
-    // Serializes navigation turns. It protects three Brain-private invariants: a single live
+    // Serializes navigation turns. It protects three Agent-private invariants: a single live
     // navigation conversation, a single in-flight Conversation.sendMessage (a blocking JNI call
     // with no locking of its own), and a "Current screen" prefix that reflects the previous
     // turn's result. Non-reentrant: NavigationTools callbacks run inside sendMessage, i.e. while
@@ -94,7 +94,7 @@ class Brain {
             try {
                 navigationConversation?.takeIf { it.isAlive }?.cancelProcess()
             } catch (e: Exception) {
-                android.util.Log.d("Brain", "close(): cancelProcess failed: ${e.message}")
+                android.util.Log.d("Agent", "close(): cancelProcess failed: ${e.message}")
             }
         }
         teardownScope.launch {
@@ -110,7 +110,7 @@ class Brain {
      * an action flagged [Action.isDroppableWhenBusy] is dropped instead of queued when another
      * turn is in flight, every other action waits for its turn.
      *
-     * Returns false when the action was dropped, either because the Brain was busy or because it
+     * Returns false when the action was dropped, either because the Agent was busy or because it
      * has already been closed. The lock is taken before switching to Dispatchers.IO so the drop
      * decision is made synchronously, in call order, on the caller's dispatcher.
      */
@@ -137,11 +137,11 @@ class Brain {
             }
             val conversation = ensureNavigationConversation(activeEngine)
             val message = "Current screen: ${_answer.value.destination.id}.\n${action.prompt}"
-            android.util.Log.d("Brain", "Action: message: $message")
+            android.util.Log.d("Agent", "Action: message: $message")
             val response = conversation.sendMessage(message)
-            android.util.Log.d("Brain", "Action response: $response")
+            android.util.Log.d("Agent", "Action response: $response")
         } catch (e: Exception) {
-            android.util.Log.d("Brain", "Action error: ${e.message}")
+            android.util.Log.d("Agent", "Action error: ${e.message}")
         }
     }
 
@@ -179,7 +179,7 @@ class Brain {
         @Tool(description = "Show the welcome screen with the button that starts the app.")
         fun showWelcomeScreen(): String {
             _answer.value = ShowWelcomeScreen.also {
-                android.util.Log.d("Brain", "Tool calling, $it")
+                android.util.Log.d("Agent", "Tool calling, $it")
             }
             return "Showing the welcome screen."
         }
@@ -190,7 +190,7 @@ class Brain {
             @ToolParam(description = "The current or updated app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowParamsSettingScreen(n = n, appLanguage = appLanguage).also {
-                android.util.Log.d("Brain", "Tool calling, $it")
+                android.util.Log.d("Agent", "Tool calling, $it")
             }
             return "Showing the parameters screen."
         }
@@ -201,7 +201,7 @@ class Brain {
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowCalculationScreen(n = n, appLanguage = appLanguage).also {
-                android.util.Log.d("Brain", "Tool calling, $it")
+                android.util.Log.d("Agent", "Tool calling, $it")
             }
             return "Showing the calculation screen."
         }
@@ -211,7 +211,7 @@ class Brain {
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowSuccessScreen(appLanguage = appLanguage).also {
-                android.util.Log.d("Brain", "Tool calling, $it")
+                android.util.Log.d("Agent", "Tool calling, $it")
             }
             return "Showing the success screen."
         }
@@ -221,7 +221,7 @@ class Brain {
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowFailureScreen(appLanguage = appLanguage).also {
-                android.util.Log.d("Brain", "Tool calling, $it")
+                android.util.Log.d("Agent", "Tool calling, $it")
             }
             return "Showing the failure screen."
         }

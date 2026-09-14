@@ -15,53 +15,53 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class BrainViewModel(application: Application) : AndroidViewModel(application) {
+class AgentViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val brain = Brain()
-    val answer: StateFlow<Answer> = brain.answer
-    val paramsTexts: StateFlow<ParamsSettingScreenTexts> = brain.paramsTexts
-    val calculationTexts: StateFlow<CalculationScreenTexts> = brain.calculationTexts
-    val successTexts: StateFlow<ResultScreenTexts> = brain.successTexts
-    val failureTexts: StateFlow<ResultScreenTexts> = brain.failureTexts
+    private val agent = Agent()
+    val answer: StateFlow<Answer> = agent.answer
+    val paramsTexts: StateFlow<ParamsSettingScreenTexts> = agent.paramsTexts
+    val calculationTexts: StateFlow<CalculationScreenTexts> = agent.calculationTexts
+    val successTexts: StateFlow<ResultScreenTexts> = agent.successTexts
+    val failureTexts: StateFlow<ResultScreenTexts> = agent.failureTexts
 
-    val welcomeUiState: StateFlow<WelcomeScreenUiState> = brain.engineState
+    val welcomeUiState: StateFlow<WelcomeScreenUiState> = agent.engineState
         .map { it.toWelcomeUiState() }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, brain.engineState.value.toWelcomeUiState())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, agent.engineState.value.toWelcomeUiState())
 
     init {
-        viewModelScope.launch { brain.initializeEngine(getApplication()) }
+        viewModelScope.launch { agent.initializeEngine(getApplication()) }
     }
 
     override fun onCleared() {
         super.onCleared()
-        brain.close()
+        agent.close()
     }
 
-    // Serialization and drop-when-busy live in Brain; this is only the bridge to viewModelScope.
+    // Serialization and drop-when-busy live in Agent; this is only the bridge to viewModelScope.
     fun onNewInputAction(action: Action) {
         viewModelScope.launch {
-            if (!brain.onNewInputAction(action)) {
-                android.util.Log.d("BrainViewModel", "Dropped: ${action::class.simpleName}")
+            if (!agent.onNewInputAction(action)) {
+                android.util.Log.d("AgentViewModel", "Dropped: ${action::class.simpleName}")
             }
         }
     }
 
-    // Text generation is not serialized with navigation (see Brain), so it never blocks
+    // Text generation is not serialized with navigation (see Agent), so it never blocks
     // navigation decisions.
     fun refreshParamsTexts(language: String) {
-        viewModelScope.launch { brain.generateParamsTexts(language) }
+        viewModelScope.launch { agent.generateParamsTexts(language) }
     }
 
     fun refreshCalculationTexts(language: String) {
-        viewModelScope.launch { brain.generateCalculationTexts(language) }
+        viewModelScope.launch { agent.generateCalculationTexts(language) }
     }
 
     fun refreshSuccessTexts(language: String) {
-        viewModelScope.launch { brain.generateSuccessTexts(language) }
+        viewModelScope.launch { agent.generateSuccessTexts(language) }
     }
 
     fun refreshFailureTexts(language: String) {
-        viewModelScope.launch { brain.generateFailureTexts(language) }
+        viewModelScope.launch { agent.generateFailureTexts(language) }
     }
 
     private fun EngineState.toWelcomeUiState(): WelcomeScreenUiState = when (this) {
