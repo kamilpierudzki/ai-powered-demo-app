@@ -40,25 +40,25 @@ class Brain {
 
     private val navigationToolProvider = tool(NavigationTools())
 
-    private val engineWrapper = EngineWrapper()
-    private val screenTexts = ScreenTextsGenerator(engineWrapper)
+    private val engineHolder = EngineHolder()
+    private val screenTexts = ScreenTextsGenerator(engineHolder)
 
-    val engineState: StateFlow<EngineState> = engineWrapper.state
+    val engineState: StateFlow<EngineState> = engineHolder.state
 
     val paramsTexts: StateFlow<ParamsSettingScreenTexts> get() = screenTexts.paramsTexts
     val calculationTexts: StateFlow<CalculationScreenTexts> get() = screenTexts.calculationTexts
     val successTexts: StateFlow<ResultScreenTexts> get() = screenTexts.successTexts
     val failureTexts: StateFlow<ResultScreenTexts> get() = screenTexts.failureTexts
 
-    suspend fun initializeEngine(context: Context) = engineWrapper.initialize(context)
+    suspend fun initializeEngine(context: Context) = engineHolder.initialize(context)
 
     fun closeEngine() {
         resetNavigationConversation()
-        engineWrapper.close()
+        engineHolder.close()
     }
 
     suspend fun onNewInputAction(action: Action) = withContext(Dispatchers.IO) {
-        val activeEngine = engineWrapper.engine ?: return@withContext
+        val activeEngine = engineHolder.engine ?: return@withContext
         try {
             if (action.startsFreshNavigationConversation) {
                 resetNavigationConversation()

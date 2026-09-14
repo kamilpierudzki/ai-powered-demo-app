@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 class ScreenTextsGenerator(
-    private val engineWrapper: EngineWrapper,
+    private val engineHolder: EngineHolder,
 ) {
 
     private val _paramsTexts = MutableStateFlow(LOADING_PARAMS_TEXTS)
@@ -43,7 +43,7 @@ class ScreenTextsGenerator(
         lastParamsTextsLanguage = language
         _paramsTexts.value = _paramsTexts.value.copy(loading = true)
 
-        val activeEngine = engineWrapper.engine ?: run {
+        val activeEngine = engineHolder.engine ?: run {
             _paramsTexts.value = PARAMS_FALLBACK
             return@withContext
         }
@@ -74,7 +74,7 @@ class ScreenTextsGenerator(
     }
 
     private fun calculationTextsFor(prompt: String): CalculationScreenTexts {
-        val activeEngine = engineWrapper.engine ?: return CALCULATION_FALLBACK
+        val activeEngine = engineHolder.engine ?: return CALCULATION_FALLBACK
         return try {
             activeEngine.createConversation(
                 ConversationConfig(
@@ -107,7 +107,7 @@ class ScreenTextsGenerator(
     }
 
     private fun resultTextsFor(prompt: String): ResultScreenTexts {
-        val activeEngine = engineWrapper.engine ?: return RESULT_FALLBACK
+        val activeEngine = engineHolder.engine ?: return RESULT_FALLBACK
         return try {
             activeEngine.createConversation(
                 ConversationConfig(

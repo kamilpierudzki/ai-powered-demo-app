@@ -62,7 +62,7 @@ flowchart TD
 | Component | File | Responsibility |
 | --- | --- | --- |
 | `Brain` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Brain.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Brain.kt) | Keeps a navigation conversation that is reused within a calculation run but recreated at the start of each new run (so stale timing history can't skew the limit decision); `appLanguage` and `n` live in the model's own context within a run and are re-seeded via `UserFinishedSettingUpParams` when a new run begins. Turns actions into messages, lets the model navigate by calling tools, and generates per-screen texts. Exposes everything as `StateFlow`. |
-| `EngineWrapper` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineWrapper.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineWrapper.kt) | Owns the LiteRT-LM `Engine` lifecycle and exposes `EngineState` (`Initializing` / `Ready` / `Error`). |
+| `EngineHolder` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt) | Holds the single LiteRT-LM `Engine` instance: creates and initializes it (model file check, `EngineConfig`, GPU backend), closes it, and exposes `EngineState` (`Initializing` / `Ready` / `Error`). |
 | `BrainViewModel` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainViewModel.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainViewModel.kt) | `AndroidViewModel` that initializes/closes the engine and serializes navigation actions with a `Mutex`. Text generation runs outside the lock so it never blocks navigation. |
 | `BrainBasedApp` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainBasedApp.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainBasedApp.kt) | Collects the current `Answer` and delegates rendering to it via `answer.Content(brainViewModel)` — no `when`/branching. Each `Answer` renders its own screen. |
 
@@ -114,7 +114,7 @@ app/src/main/kotlin/com/pierudzki/aipowereddemoapp/
 │   ├── Brain.kt                 # Navigation conversation (recreated per run) + tools
 │   ├── BrainViewModel.kt        # Engine lifecycle, action serialization
 │   ├── BrainBasedApp.kt         # Delegates rendering to the current Answer
-│   ├── EngineWrapper.kt         # LiteRT-LM engine lifecycle and state
+│   ├── EngineHolder.kt          # Holds the LiteRT-LM engine; lifecycle and state
 │   ├── ScreenTextsGenerator.kt  # Generates localized per-screen texts (high temp)
 │   ├── ModelConfig.kt           # Model file name and on-device path
 │   ├── action/                  # User/system interactions (Action prompts)
@@ -138,7 +138,7 @@ app/src/main/kotlin/com/pierudzki/aipowereddemoapp/
 - **Android Studio** (latest stable) or the Android command-line tools with the Gradle wrapper.
 - **JDK 11+**.
 - A **physical device or emulator** running **Android 16.0 (API 36)** or higher.
-- A **GPU-capable device is recommended.** The engine defaults to `Backend.GPU()` in [EngineWrapper.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineWrapper.kt). On devices without a usable GPU, switch to `Backend.CPU()` there.
+- A **GPU-capable device is recommended.** The engine defaults to `Backend.GPU()` in [EngineHolder.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt). On devices without a usable GPU, switch to `Backend.CPU()` there.
 - `adb` available on your `PATH` (to push the model file).
 
 ---
@@ -158,7 +158,7 @@ adb shell mkdir -p /data/local/tmp/llm
 adb push gemma-4-E4B-it.litertlm /data/local/tmp/llm/gemma-4-E4B-it.litertlm
 ```
 
-If the model is missing, the Welcome screen surfaces an **error state** instead of enabling the Start button (`EngineState.Error`, see [EngineWrapper.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineWrapper.kt)).
+If the model is missing, the Welcome screen surfaces an **error state** instead of enabling the Start button (`EngineState.Error`, see [EngineHolder.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt)).
 
 > Note: obtain a LiteRT-LM-compatible Gemma model file and rename/match it to the expected file name, or update `MODEL_FILE_NAME` in `ModelConfig.kt` to match your file.
 

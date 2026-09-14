@@ -29,7 +29,7 @@ sealed interface EngineState {
     ) : EngineState
 }
 
-class EngineWrapper {
+class EngineHolder {
 
     var engine: Engine? = null
         private set
@@ -43,11 +43,11 @@ class EngineWrapper {
 
     suspend fun initialize(context: Context) = withContext(Dispatchers.IO) {
         if (engine != null) {
-            android.util.Log.d("EngineWrapper", "Already initialized")
+            android.util.Log.d("EngineHolder", "Already initialized")
             return@withContext
         }
         if (!isModelAvailable()) {
-            android.util.Log.d("EngineWrapper", "initialize(...), Model not available")
+            android.util.Log.d("EngineHolder", "initialize(...), Model not available")
             _state.value = EngineState.Error(
                 message = "Model not available",
                 modelName = modelName(),
@@ -61,18 +61,18 @@ class EngineWrapper {
             )
             try {
                 engine = Engine(config).also {
-                    android.util.Log.d("EngineWrapper", "initialize(...), Initializing")
+                    android.util.Log.d("EngineHolder", "initialize(...), Initializing")
                     _state.value = EngineState.Initializing(
                         modelName = modelName(),
                     )
                     it.initialize()
-                    android.util.Log.d("EngineWrapper", "initialize(...), Ready")
+                    android.util.Log.d("EngineHolder", "initialize(...), Ready")
                     _state.value = EngineState.Ready(
                         modelName = modelName(),
                     )
                 }
             } catch (e: Exception) {
-                android.util.Log.d("EngineWrapper", "initialize(...), Error: ${e.message}")
+                android.util.Log.d("EngineHolder", "initialize(...), Error: ${e.message}")
                 _state.value = EngineState.Error(
                     message = "Initialization error: ${e.message}",
                     modelName = modelName(),
@@ -82,7 +82,7 @@ class EngineWrapper {
     }
 
     fun close() {
-        android.util.Log.d("EngineWrapper", "close()")
+        android.util.Log.d("EngineHolder", "close()")
         engine?.close()
         engine = null
     }
