@@ -48,8 +48,8 @@ The app is built around a simple, repeating loop: a user interaction becomes an 
 ```mermaid
 flowchart TD
     UI["Compose UI (BrainBasedApp)"] -->|"user interaction"| Action["Action (natural-language prompt)"]
-    Action --> VM["BrainViewModel (Mutex-serialized)"]
-    VM --> Brain["Brain"]
+    Action --> VM["BrainViewModel"]
+    VM --> Brain["Brain (Mutex-serialized)"]
     Brain -->|"NavigationPrompt + message"| LLM["On-device LLM (LiteRT-LM engine)"]
     LLM -->|"tool call"| Brain
     Brain -->|"Answer (StateFlow)"| UI
@@ -61,9 +61,9 @@ flowchart TD
 
 | Component | File | Responsibility |
 | --- | --- | --- |
-| `Brain` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Brain.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Brain.kt) | Keeps a navigation conversation that is reused within a calculation run but recreated at the start of each new run (so stale timing history can't skew the limit decision); `appLanguage` and `n` live in the model's own context within a run and are re-seeded via `UserFinishedSettingUpParams` when a new run begins. Turns actions into messages, lets the model navigate by calling tools, and generates per-screen texts. Exposes everything as `StateFlow`. |
+| `Brain` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Brain.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Brain.kt) | Keeps a navigation conversation that is reused within a calculation run but recreated at the start of each new run (so stale timing history can't skew the limit decision); `appLanguage` and `n` live in the model's own context within a run and are re-seeded via `UserFinishedSettingUpParams` when a new run begins. Turns actions into messages, lets the model navigate by calling tools, and generates per-screen texts. Serializes navigation turns with a `Mutex` it owns, drops actions flagged `isDroppableWhenBusy` while a turn is in flight, and closes the conversation and the engine under the same lock. Exposes everything as `StateFlow`. |
 | `EngineHolder` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt) | Holds the single LiteRT-LM `Engine` instance: creates and initializes it (model file check, `EngineConfig`, GPU backend), closes it, and exposes `EngineState` (`Initializing` / `Ready` / `Error`). |
-| `BrainViewModel` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainViewModel.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainViewModel.kt) | `AndroidViewModel` that initializes/closes the engine and serializes navigation actions with a `Mutex`. Text generation runs outside the lock so it never blocks navigation. |
+| `BrainViewModel` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainViewModel.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainViewModel.kt) | `AndroidViewModel` that is pure lifecycle glue: owns the coroutine scope, initializes the engine, closes the Brain in `onCleared()`, forwards actions to the Brain and maps `EngineState` to the Welcome screen UI state. |
 | `BrainBasedApp` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainBasedApp.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/BrainBasedApp.kt) | Collects the current `Answer` and delegates rendering to it via `answer.Content(brainViewModel)` — no `when`/branching. Each `Answer` renders its own screen. |
 
 ### Actions (input)
@@ -111,8 +111,8 @@ Each `Answer` renders its own screen. The interface declares a single `@Composab
 ```text
 app/src/main/kotlin/com/pierudzki/aipowereddemoapp/
 ├── ai/                          # The "Brain" and everything LLM-related
-│   ├── Brain.kt                 # Navigation conversation (recreated per run) + tools
-│   ├── BrainViewModel.kt        # Engine lifecycle, action serialization
+│   ├── Brain.kt                 # Navigation conversation (recreated per run), tools, action serialization
+│   ├── BrainViewModel.kt        # Lifecycle glue: scope, engine init/close, UI-state mapping
 │   ├── BrainBasedApp.kt         # Delegates rendering to the current Answer
 │   ├── EngineHolder.kt          # Holds the LiteRT-LM engine; lifecycle and state
 │   ├── ScreenTextsGenerator.kt  # Generates localized per-screen texts (high temp)
@@ -187,7 +187,7 @@ Make sure the model file has been pushed (see [Model setup](#model-setup)) befor
 - **Navigation conversation, recreated per run.** The Brain uses a single LiteRT-LM conversation (with `NavigationPrompt` as the system instruction) and reuses it across turns, but it recreates the conversation at the start of each new calculation run - when `UserFinishedSettingUpParams` arrives (flagged via `startsFreshNavigationConversation`) the Brain calls `resetNavigationConversation()` first - so stale timing history from a previous run cannot leak in and skew limit detection. Because a fresh conversation has no memory, that action carries the confirmed `n` and `appLanguage` in its first message; within a run they are then remembered by the model across turns instead of being cached in the app. Each message is prefixed with the authoritative current screen. The model navigates by calling exactly one tool, which updates the current `Answer`; the exception is the calculation screen while still within the time limit, where the model replies `WAIT` and the current `Answer` is left unchanged.
 - **Two sampler configurations.** Navigation uses a low temperature (`temperature = 0.2`) so routing stays deterministic and reliable (defined in [Brain.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Brain.kt)); screen texts use a high temperature (`temperature = 1.0`) to keep the copy varied and natural (defined in [ScreenTextsGenerator.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/ScreenTextsGenerator.kt)).
 - **The time limit is an AI decision.** `CalculationScreenViewModel` runs the recursive `fib(...)` and emits `CalculationDurationUpdated` ticks plus a final `CalculationFinished`. Each tick carries only the elapsed seconds; the hard limit is defined once in `NavigationPrompt` (the system instruction), which the model must remember and compare against the elapsed seconds on every message: while still within the limit it replies with the single word `WAIT` (no navigation, so the calculation screen stays put), and it switches to Failure once the elapsed time passes the limit. The app does not contain a hardcoded timeout branch for navigation.
-- **Concurrency safety.** Navigation actions are serialized through a `Mutex` in `BrainViewModel`. High-frequency ticks (`CalculationDurationUpdated`) are droppable: if the Brain is busy, they are skipped via `tryLock()` so the model is never flooded. Text generation runs on a separate path and does not block navigation.
+- **Concurrency safety.** Navigation actions are serialized through a `Mutex` owned by the `Brain` itself, so the Brain is correct no matter who calls it. High-frequency ticks (`CalculationDurationUpdated`) are droppable: if the Brain is busy, they are skipped via `tryLock()` so the model is never flooded. Text generation runs on a separate path and does not block navigation. Teardown takes the same lock: `Brain.close()` (called from `onCleared()`) asks the in-flight turn to cancel and then closes the conversation and the engine only once that turn has released the lock, so the navigation conversation's native handles are never freed mid-turn. Short-lived text-generation conversations run outside the lock and are not serialized with teardown.
 - **Resilient by design.** A failed navigation turn simply leaves the current `Answer` unchanged, and text generation still parses JSON with predefined fallback texts, so the UI never crashes on a bad generation.
 
 ---

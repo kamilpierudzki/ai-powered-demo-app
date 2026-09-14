@@ -14,8 +14,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 class BrainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -30,35 +28,26 @@ class BrainViewModel(application: Application) : AndroidViewModel(application) {
         .map { it.toWelcomeUiState() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, brain.engineState.value.toWelcomeUiState())
 
-    private val brainMutex = Mutex()
-
     init {
         viewModelScope.launch { brain.initializeEngine(getApplication()) }
     }
 
     override fun onCleared() {
         super.onCleared()
-        brain.closeEngine()
+        brain.close()
     }
 
+    // Serialization and drop-when-busy live in Brain; this is only the bridge to viewModelScope.
     fun onNewInputAction(action: Action) {
         viewModelScope.launch {
-            if (action.isDroppableWhenBusy) {
-                if (!brainMutex.tryLock()) return@launch
-                try {
-                    brain.onNewInputAction(action)
-                } finally {
-                    brainMutex.unlock()
-                }
-            } else {
-                brainMutex.withLock {
-                    brain.onNewInputAction(action)
-                }
+            if (!brain.onNewInputAction(action)) {
+                android.util.Log.d("BrainViewModel", "Dropped: ${action::class.simpleName}")
             }
         }
     }
 
-    // Text generation runs outside brainMutex so it does not block navigation decisions.
+    // Text generation is not serialized with navigation (see Brain), so it never blocks
+    // navigation decisions.
     fun refreshParamsTexts(language: String) {
         viewModelScope.launch { brain.generateParamsTexts(language) }
     }
