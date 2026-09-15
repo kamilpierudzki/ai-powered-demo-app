@@ -156,7 +156,13 @@ The model is **not bundled in the APK** because it is too large. During developm
 /data/local/tmp/llm/gemma-4-E4B-it.litertlm
 ```
 
-Push the model file to the device:
+**1. Download the model.** The file is published on Hugging Face by `litert-community` and can be downloaded directly from this link (about 3.7 GB): [gemma-4-E4B-it.litertlm](https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm?download=true). The downloaded file already has the name the app expects. From the terminal:
+
+```bash
+curl -L -o gemma-4-E4B-it.litertlm "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm?download=true"
+```
+
+**2. Push the model file to the device:**
 
 ```bash
 adb shell mkdir -p /data/local/tmp/llm
@@ -165,7 +171,7 @@ adb push gemma-4-E4B-it.litertlm /data/local/tmp/llm/gemma-4-E4B-it.litertlm
 
 If the model is missing, the Welcome screen surfaces an **error state** instead of enabling the Start button (`EngineState.Error`, see [EngineHolder.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt)).
 
-> Note: obtain a LiteRT-LM-compatible Gemma model file and rename/match it to the expected file name, or update `MODEL_FILE_NAME` in `ModelConfig.kt` to match your file.
+> Note: if you use a different LiteRT-LM-compatible Gemma model file, rename it to the expected file name or update `MODEL_FILE_NAME` in `ModelConfig.kt` to match your file.
 
 ---
 
