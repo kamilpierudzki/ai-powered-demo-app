@@ -22,15 +22,15 @@ object ScreenTextsPrompts {
 
         The user wants the text to be in the following language: "${appLanguage}."
         
-        Response with ONLY a single, minified JSON object, without Markdown constraints and without any additional text or explanation. Use these keys and meanings exactly:
+        Respond with ONLY a single minified JSON object, without markdown code fences and without any extra text or explanation. Use exactly these keys and meanings:
         - "title": the screen title (point 1 above).
         - "languageHint": the text box hint for the app language (point 2 above).
-        - "changeLanguageButton": the text box text that triggers the text update (point 3 above).
+        - "changeLanguageButton": the button text that triggers the text update (point 3 above).
         - "nHint": the text box hint for the N value (point 4 above).
-        - "changeNButton": the text box text that tells the app to update the N value (point 5 above).
+        - "saveNButton": the button text that saves the N value and starts the calculation (point 5 above).
 
         Example of the exact required format:
-        {"title":"...","languageHint":"...","changeLanguageButton":"...","nHint":"...","changeNButton":"..."}
+        {"title":"...","languageHint":"...","changeLanguageButton":"...","nHint":"...","saveNButton":"..."}
         """.trimIndent()
 
     fun calculationTexts(appLanguage: String): String =

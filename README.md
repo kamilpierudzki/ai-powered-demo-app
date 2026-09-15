@@ -1,10 +1,10 @@
 # ai-powered-demo-app
 
-An experimental Android application whose **navigation and every piece of on-screen text are produced by an on-device Large Language Model (LLM)** instead of hardcoded logic. The model runs entirely on the device through [Google AI Edge LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM) — no network calls, no server.
+An experimental Android application whose **navigation and the texts of every Agent-driven screen (titles, hints, buttons, messages) are produced by an on-device Large Language Model (LLM)** instead of hardcoded logic. The model runs entirely on the device through [Google AI Edge LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM) — no network calls, no server.
 
 The app wraps this model in an **Agent**: a Kotlin class that holds the conversation with the model and the screen tools the model can call. Each user interaction is turned into a short natural-language description and sent to the Agent; the model decides which screen to show next by calling one of the Agent's tools, and writes all the UI strings (titles, hints, buttons, messages) in whatever language the user asks for.
 
-In this README *the model* (or *the LLM*) means Gemma running in the LiteRT-LM engine, and *the Agent* means the Kotlin class that wraps it.
+In this README *the model* (or *the LLM*) means Gemma running in the LiteRT-LM engine, *the Agent* means the Kotlin class that wraps it, and *the Copywriter* means the Kotlin class through which the Agent asks the model for each screen's texts. The model writes the copy; the Agent and the Copywriter only ask, parse and publish.
 
 A small Fibonacci calculator is used as the demo scenario to show the idea end to end, including a time limit that is judged by the model rather than by an `if` statement.
 
@@ -13,9 +13,9 @@ A small Fibonacci calculator is used as the demo scenario to show the idea end t
 ## Highlights
 
 - **LLM as the navigator.** There is no explicit navigation graph driving the flow. The Agent keeps a running conversation with the model, feeds it a description of what the user did, and the model navigates by calling exactly one of the Agent's screen tools (function calling).
-- **AI-generated, multilingual UI.** Type any language on the parameters screen (for example `English`, `Polish`, `Spanish`, `Japanese`) and every label and message is regenerated in that language on the fly.
+- **AI-generated, multilingual UI.** Type any language on the parameters screen (for example `English`, `Polish`, `Spanish`, `Japanese`) and every label and message is regenerated in that language on the fly. Texts are written anew every time a screen is shown, so the wording changes a little from visit to visit.
 - **Fully on-device.** Inference runs locally via LiteRT-LM with a Gemma model and the GPU backend by default. Nothing leaves the device.
-- **Two "personalities" of the same model.** Low temperature for predictable navigation decisions, high temperature for creative screen copy.
+- **Two "personalities" of the same model.** Low temperature for predictable navigation decisions (the `Agent`'s navigation conversation), high temperature for creative screen copy (the `Agent`'s `Copywriter`).
 - **Modern Android stack.** 100% Kotlin, Jetpack Compose, Material 3, MVVM with `StateFlow`.
 
 ---
@@ -55,15 +55,18 @@ flowchart TD
     Agent -->|"NavigationPrompt + message"| LLM["On-device LLM (LiteRT-LM engine)"]
     LLM -->|"tool call"| Agent
     Agent -->|"Answer (StateFlow)"| UI
-    Agent -->|"ScreenTextsPrompts"| LLM
-    LLM -->|"localized UI texts"| Agent
+    Agent --> Copywriter["Copywriter (creative, per screen)"]
+    Copywriter -->|"ScreenTextsPrompts"| LLM
+    LLM -->|"localized UI texts (JSON)"| Copywriter
+    Copywriter -->|"*ScreenTexts (StateFlow, via Agent)"| UI
 ```
 
 ### Core pieces
 
 | Component | File | Responsibility |
 | --- | --- | --- |
-| `Agent` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Agent.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Agent.kt) | Keeps a navigation conversation that is reused within a calculation run but recreated at the start of each new run (so stale timing history can't skew the limit decision); `appLanguage` and `n` live in the model's own context within a run and are re-seeded via `UserFinishedSettingUpParams` when a new run begins. Turns actions into messages, lets the model navigate by calling tools, and generates per-screen texts. Serializes navigation turns with a `Mutex` it owns, drops actions flagged `isDroppableWhenBusy` while a turn is in flight, and closes the conversation and the engine under the same lock. Exposes everything as `StateFlow`. |
+| `Agent` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Agent.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Agent.kt) | Keeps a navigation conversation that is reused within a calculation run but recreated at the start of each new run (so stale timing history can't skew the limit decision); `appLanguage` and `n` live in the model's own context within a run and are re-seeded via `UserFinishedSettingUpParams` when a new run begins. Turns actions into messages, lets the model navigate by calling tools, and generates per-screen texts through the `Copywriter` it owns (the model's second personality), which it also closes. Serializes navigation turns with a `Mutex` it owns, drops actions flagged `isDroppableWhenBusy` while a turn is in flight, and closes the conversation and the engine under the same lock once in-flight text generations have finished. Exposes everything as `StateFlow`. |
+| `Copywriter` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Copywriter.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Copywriter.kt) | The model's second personality, owned by the `Agent`. For each of the params, calculation, success and failure screens it opens a short single-turn, tool-less conversation whose system instruction is that screen's prompt (`ScreenTextsPrompts`) at `temperature = 1.0`, parses the JSON reply leniently and publishes typed `*ScreenTexts` via one `StateFlow` per screen. Generates the texts anew every time a screen is shown or re-created — nothing is cached, on purpose, so the same screen in the same language reads slightly differently on each visit and the model's creativity stays visible; while it writes, the screen shows "Loading..." placeholders. Shows an explicit "Text generation failed" placeholder when a reply is unusable, serializes requests per screen with its own `Mutex` (so the last requested language always ends up on screen), and is cancelled and awaited by `Agent.close()`. |
 | `EngineHolder` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt) | Holds the single LiteRT-LM `Engine` instance: creates and initializes it (model file check, `EngineConfig`, GPU backend), closes it, and exposes `EngineState` (`Initializing` / `Ready` / `Error`). |
 | `AgentViewModel` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/AgentViewModel.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/AgentViewModel.kt) | `AndroidViewModel` that is pure lifecycle glue: owns the coroutine scope, initializes the engine, closes the Agent in `onCleared()`, forwards actions to the Agent and maps `EngineState` to the Welcome screen UI state. |
 | `AgentDrivenApp` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/AgentDrivenApp.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/AgentDrivenApp.kt) | Collects the current `Answer` and delegates rendering to it via `answer.Content(agentViewModel)` — no `when`/branching. Each `Answer` renders its own screen. |
@@ -88,7 +91,7 @@ Each `Answer` renders its own screen. The interface declares a single `@Composab
 ### Prompts
 
 - [NavigationPrompt.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/prompt/NavigationPrompt.kt) — the system instruction for navigation. It lists the available screens and their tools, tells the model to remember `n` and `appLanguage` across the conversation (defaulting to `10` and `English`), explains that every message is prefixed with the current screen, and states the time limit. The model navigates by calling exactly one tool — no text or JSON — with one exception: on the calculation screen while still within the time limit it replies with the single word `WAIT` instead of calling a tool, so the screen is not needlessly re-issued every tick.
-- [ScreenTextsPrompts.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/prompt/ScreenTextsPrompts.kt) — one prompt per screen that asks the model to produce localized UI strings as JSON.
+- [ScreenTextsPrompts.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/prompt/ScreenTextsPrompts.kt) — one prompt per screen, used by the `Copywriter` as the system instruction of a fresh single-turn conversation: what the screen does, which texts it needs and their length limits, the requested language, and an instruction to answer with a single minified JSON object using fixed keys.
 
 ---
 
@@ -117,7 +120,7 @@ app/src/main/kotlin/com/pierudzki/aipowereddemoapp/
 │   ├── AgentViewModel.kt        # Lifecycle glue: scope, engine init/close, UI-state mapping
 │   ├── AgentDrivenApp.kt        # Delegates rendering to the current Answer
 │   ├── EngineHolder.kt          # Holds the LiteRT-LM engine; lifecycle and state
-│   ├── ScreenTextsGenerator.kt  # Generates localized per-screen texts (high temp)
+│   ├── Copywriter.kt            # Localized per-screen texts (high temp): one short conversation per screen visit, no cache
 │   ├── ModelConfig.kt           # Model file name and on-device path
 │   ├── action/                  # User/system interactions (Action prompts)
 │   ├── answer/                  # Sealed Answer types; each renders its own screen
@@ -187,10 +190,10 @@ Make sure the model file has been pushed (see [Model setup](#model-setup)) befor
 ## How it works in detail
 
 - **Navigation conversation, recreated per run.** The Agent uses a single LiteRT-LM conversation (with `NavigationPrompt` as the system instruction) and reuses it across turns, but it recreates the conversation at the start of each new calculation run - when `UserFinishedSettingUpParams` arrives (flagged via `startsFreshNavigationConversation`) the Agent calls `resetNavigationConversation()` first - so stale timing history from a previous run cannot leak in and skew limit detection. Because a fresh conversation has no memory, that action carries the confirmed `n` and `appLanguage` in its first message; within a run they are then remembered by the model across turns instead of being cached in the app. Each message is prefixed with the authoritative current screen. The model navigates by calling exactly one tool, which updates the current `Answer`; the exception is the calculation screen while still within the time limit, where the model replies `WAIT` and the current `Answer` is left unchanged.
-- **Two sampler configurations.** Navigation uses a low temperature (`temperature = 0.2`) so routing stays deterministic and reliable (defined in [Agent.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Agent.kt)); screen texts use a high temperature (`temperature = 1.0`) to keep the copy varied and natural (defined in [ScreenTextsGenerator.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/ScreenTextsGenerator.kt)).
+- **Two personalities, two sampler configurations.** Navigation uses a low temperature (`temperature = 0.2`) so routing stays deterministic and reliable (defined in [Agent.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Agent.kt)); screen texts use a high temperature (`temperature = 1.0`) to keep the copy varied and natural (defined in [Copywriter.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Copywriter.kt)). Each screen's texts come from a fresh single-turn conversation without tools, so a creative reply can never leak into the navigation history. Screen texts are never cached: each time a screen is shown the model writes them again, which is what makes its creativity visible in a demo (a real product would cache per language).
 - **The time limit is an AI decision.** `CalculationScreenViewModel` runs the recursive `fib(...)` and emits `CalculationDurationUpdated` ticks plus a final `CalculationFinished`. Each tick carries only the elapsed seconds; the hard limit is defined once in `NavigationPrompt` (the system instruction), which the model must remember and compare against the elapsed seconds on every message: while still within the limit it replies with the single word `WAIT` (no navigation, so the calculation screen stays put), and it switches to Failure once the elapsed time passes the limit. The app does not contain a hardcoded timeout branch for navigation.
-- **Concurrency safety.** Navigation actions are serialized through a `Mutex` owned by the `Agent` itself, so the Agent is correct no matter who calls it. High-frequency ticks (`CalculationDurationUpdated`) are droppable: if the Agent is busy, they are skipped via `tryLock()` so the model is never flooded. Text generation runs on a separate path and does not block navigation. Teardown takes the same lock: `Agent.close()` (called from `onCleared()`) asks the in-flight turn to cancel and then closes the conversation and the engine only once that turn has released the lock, so the navigation conversation's native handles are never freed mid-turn. Short-lived text-generation conversations run outside the lock and are not serialized with teardown.
-- **Resilient by design.** A failed navigation turn simply leaves the current `Answer` unchanged, and text generation still parses JSON with predefined fallback texts, so the UI never crashes on a bad generation.
+- **Concurrency safety.** Navigation actions are serialized through a `Mutex` owned by the `Agent` itself, so the Agent is correct no matter who calls it. High-frequency ticks (`CalculationDurationUpdated`) are droppable: if the Agent is busy, they are skipped via `tryLock()` so the model is never flooded. Text generation runs on a separate path: one short conversation per screen, serialized per screen by the `Copywriter`'s own `Mutex`es (requests for one screen run one after another in call order, each one a fresh generation, so the last requested language always wins; a request that arrives while one is in flight, e.g. after a rotation, waits and then generates again), never under the navigation `Mutex`, so it never blocks navigation. Teardown takes the same lock: `Agent.close()` (called from `onCleared()`) asks the in-flight turn to cancel and then closes the conversation and the engine only once that turn has released the lock, so the navigation conversation's native handles are never freed mid-turn. Teardown covers both paths: `Agent.close()` first refuses new text generations and asks in-flight ones to cancel (`Copywriter.close()`), waits for them to finish (`awaitIdle()`), and only then closes the navigation conversation and the engine under the navigation lock.
+- **Resilient by design.** A failed navigation turn simply leaves the current `Answer` unchanged, and text generation parses the model's JSON leniently (code fences around the object are ignored, a missing or blank field falls back individually), shows an explicit "Text generation failed" placeholder when a reply is unusable, so the UI never crashes on a bad generation; since every visit asks the model again, a bad reply lasts only until the screen is shown next.
 
 ---
 
@@ -200,6 +203,7 @@ Make sure the model file has been pushed (see [Model setup](#model-setup)) befor
 - The model file must be provisioned manually via `adb`. For a real product it should be downloaded at runtime (as noted in [ModelConfig.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/ModelConfig.kt)).
 - The `navigation-compose` dependency is present in the build, but the actual flow is **state-driven** by the `Agent` (the rendered screen follows the current `Answer`), not a `NavHost`.
 - On-device inference performance depends heavily on the device and the chosen backend (GPU vs CPU).
+- Screen texts are generated anew on every visit and on every configuration change (rotation, dark mode): each costs one short on-device inference. This is deliberate — it shows the model's creativity; a real product would cache per language. On fast calculations the calculation screen is usually left before its texts arrive.
 
 ---
 

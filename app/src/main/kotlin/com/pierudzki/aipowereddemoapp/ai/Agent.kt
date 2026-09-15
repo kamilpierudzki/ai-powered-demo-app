@@ -34,6 +34,13 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
+/**
+ * The Kotlin harness around the on-device model; it runs the model's two personalities. The
+ * navigation personality lives here: one long, low-temperature conversation with the screen tools
+ * in [NavigationTools], fed by [Action]s and answered through [answer]. The copywriting personality
+ * is delegated to [Copywriter]: short, high-temperature, tool-less conversations that produce each
+ * screen's texts. Both share the single engine in [EngineHolder] and are closed together by [close].
+ */
 class Agent {
 
     // Written only by the turn holding navigationMutex, under conversationLock; read by close()
@@ -48,7 +55,7 @@ class Agent {
     private val navigationToolProvider = tool(NavigationTools())
 
     private val engineHolder = EngineHolder()
-    private val screenTexts = ScreenTextsGenerator(engineHolder)
+    private val copywriter = Copywriter(engineHolder)
 
     // Serializes navigation turns. It protects three Agent-private invariants: a single live
     // navigation conversation, a single in-flight Conversation.sendMessage (a blocking JNI call
@@ -62,7 +69,8 @@ class Agent {
 
     // viewModelScope is already cancelled by the time the owning ViewModel reaches onCleared(),
     // so teardown needs a scope of its own that survives clear(). The work it carries is bounded
-    // by at most one in-flight navigation turn.
+    // by at most one in-flight navigation turn plus at most one in-flight text generation per
+    // screen.
     private val teardownScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // Guards the short, non-blocking native calls that create, close or cancel the navigation
@@ -73,10 +81,10 @@ class Agent {
 
     val engineState: StateFlow<EngineState> = engineHolder.state
 
-    val paramsTexts: StateFlow<ParamsSettingScreenTexts> get() = screenTexts.paramsTexts
-    val calculationTexts: StateFlow<CalculationScreenTexts> get() = screenTexts.calculationTexts
-    val successTexts: StateFlow<ResultScreenTexts> get() = screenTexts.successTexts
-    val failureTexts: StateFlow<ResultScreenTexts> get() = screenTexts.failureTexts
+    val paramsTexts: StateFlow<ParamsSettingScreenTexts> get() = copywriter.paramsTexts
+    val calculationTexts: StateFlow<CalculationScreenTexts> get() = copywriter.calculationTexts
+    val successTexts: StateFlow<ResultScreenTexts> get() = copywriter.successTexts
+    val failureTexts: StateFlow<ResultScreenTexts> get() = copywriter.failureTexts
 
     suspend fun initializeEngine(context: Context) = engineHolder.initialize(context)
 
@@ -86,7 +94,10 @@ class Agent {
      * conversation and the engine are never deleted while a navigation turn is still inside
      * sendMessage. cancelProcess() is a best-effort attempt to shorten that turn and is taken
      * under [conversationLock], so it cannot run against a conversation the turn is closing.
-     * Screen-text conversations (ScreenTextsGenerator) run outside both locks and are not covered.
+     * Screen-text conversations take no Agent lock. [Copywriter.close] refuses new ones and asks
+     * in-flight ones to stop, and the teardown waits for them ([Copywriter.awaitIdle]) before the
+     * engine is closed, so no conversation of either kind is inside sendMessage when the engine
+     * goes away.
      */
     fun close() {
         closed = true
@@ -97,7 +108,11 @@ class Agent {
                 android.util.Log.d("Agent", "close(): cancelProcess failed: ${e.message}")
             }
         }
+        copywriter.close()
         teardownScope.launch {
+            // Text generations take no Agent lock; wait for them before taking navigationMutex so
+            // a screen's lock is never held together with the navigation lock.
+            copywriter.awaitIdle()
             navigationMutex.withLock {
                 resetNavigationConversation()
                 engineHolder.close()
@@ -165,14 +180,14 @@ class Agent {
         ).also { created -> synchronized(conversationLock) { navigationConversation = created } }
     }
 
-    suspend fun generateParamsTexts(language: String) = screenTexts.generateParamsTexts(language)
+    suspend fun generateParamsTexts(language: String) = copywriter.generateParamsTexts(language)
 
     suspend fun generateCalculationTexts(language: String) =
-        screenTexts.generateCalculationTexts(language)
+        copywriter.generateCalculationTexts(language)
 
-    suspend fun generateSuccessTexts(language: String) = screenTexts.generateSuccessTexts(language)
+    suspend fun generateSuccessTexts(language: String) = copywriter.generateSuccessTexts(language)
 
-    suspend fun generateFailureTexts(language: String) = screenTexts.generateFailureTexts(language)
+    suspend fun generateFailureTexts(language: String) = copywriter.generateFailureTexts(language)
 
     private inner class NavigationTools : ToolSet {
 

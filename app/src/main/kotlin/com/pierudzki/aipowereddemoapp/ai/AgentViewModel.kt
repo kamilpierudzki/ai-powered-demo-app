@@ -46,8 +46,11 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // Text generation is not serialized with navigation (see Agent), so it never blocks
-    // navigation decisions.
+    // Text generation is not serialized with navigation (the Copywriter has one small lock per
+    // screen and never takes the navigation Mutex), so it never blocks navigation decisions. It is
+    // launched in viewModelScope rather than the screen's LaunchedEffect on purpose: the blocking
+    // native call cannot be interrupted by effect cancellation anyway, and keeping requests in one
+    // scope leaves last-wins ordering to the Copywriter instead of Compose effect lifetimes.
     fun refreshParamsTexts(language: String) {
         viewModelScope.launch { agent.generateParamsTexts(language) }
     }

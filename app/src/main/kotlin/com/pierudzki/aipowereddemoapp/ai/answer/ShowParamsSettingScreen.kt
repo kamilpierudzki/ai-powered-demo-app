@@ -19,14 +19,14 @@ data class ShowParamsSettingScreen(
 
     @Composable
     override fun Content(agentViewModel: AgentViewModel) {
-        val screenTexts by agentViewModel.paramsTexts.collectAsStateWithLifecycle()
+        val paramsTexts by agentViewModel.paramsTexts.collectAsStateWithLifecycle()
 
         LaunchedEffect(appLanguage) {
             agentViewModel.refreshParamsTexts(appLanguage)
         }
 
         ParamsSettingScreen(
-            texts = screenTexts,
+            texts = paramsTexts,
             appLanguage = appLanguage,
             n = n,
             onAppLanguageChanged = {
