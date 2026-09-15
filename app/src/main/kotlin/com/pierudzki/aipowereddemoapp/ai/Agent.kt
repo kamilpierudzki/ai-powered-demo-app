@@ -1,7 +1,6 @@
 package com.pierudzki.aipowereddemoapp.ai
 
 import android.content.Context
-import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
@@ -151,12 +150,14 @@ class Agent {
                 resetNavigationConversation()
             }
             val conversation = ensureNavigationConversation(activeEngine)
-            val message = "Current screen: ${_answer.value.destination.id}.\n${action.message}"
-            android.util.Log.d("Agent", "Action: message: $message")
+            val message = "Current screen: ${_answer.value.destination.id}. ${action.message}"
+            android.util.Log.d("Agent", "message=\"$message\"")
             val response = conversation.sendMessage(message)
-            android.util.Log.d("Agent", "Action response: $response")
+            if (response.toString().isNotEmpty()) {
+                android.util.Log.d("Agent", "agent response=\"$response\"")
+            }
         } catch (e: Exception) {
-            android.util.Log.d("Agent", "Action error: ${e.message}")
+            android.util.Log.d("Agent", "error message=\"${e.message}\"")
         }
     }
 
@@ -191,12 +192,16 @@ class Agent {
 
     private inner class NavigationTools : ToolSet {
 
+        private fun printLog(message: String, answer: String) {
+            android.util.Log.d("Agent", "Tool calling, $message ($answer)")
+        }
+
         @Tool(description = "Show the welcome screen with the button that starts the app.")
         fun showWelcomeScreen(): String {
-            _answer.value = ShowWelcomeScreen.also {
-                android.util.Log.d("Agent", "Tool calling, $it")
+            _answer.value = ShowWelcomeScreen
+            return "Showing the welcome screen.".also {
+                printLog(message = it, answer = _answer.value.toString())
             }
-            return "Showing the welcome screen."
         }
 
         @Tool(description = "Show the parameters screen where the user sets the app language and the N value for the Fibonacci sequence.")
@@ -204,10 +209,10 @@ class Agent {
             @ToolParam(description = "The current or updated N value for the Fibonacci sequence.") n: Int,
             @ToolParam(description = "The current or updated app language, for example English or Polish.") appLanguage: String,
         ): String {
-            _answer.value = ShowParamsSettingScreen(n = n, appLanguage = appLanguage).also {
-                android.util.Log.d("Agent", "Tool calling, $it")
+            _answer.value = ShowParamsSettingScreen(n = n, appLanguage = appLanguage)
+            return "Showing the parameters screen.".also {
+                printLog(message = it, answer = _answer.value.toString())
             }
-            return "Showing the parameters screen."
         }
 
         @Tool(description = "Show the calculation screen that runs the Fibonacci calculation for N and shows the produced values.")
@@ -215,30 +220,30 @@ class Agent {
             @ToolParam(description = "The N value for the Fibonacci sequence to compute.") n: Int,
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
-            _answer.value = ShowCalculationScreen(n = n, appLanguage = appLanguage).also {
-                android.util.Log.d("Agent", "Tool calling, $it")
+            _answer.value = ShowCalculationScreen(n = n, appLanguage = appLanguage)
+            return "Showing the calculation screen.".also {
+                printLog(message = it, answer = _answer.value.toString())
             }
-            return "Showing the calculation screen."
         }
 
         @Tool(description = "Show the success screen, used when the Fibonacci calculation finished within the allowed time limit.")
         fun showSuccessScreen(
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
-            _answer.value = ShowSuccessScreen(appLanguage = appLanguage).also {
-                android.util.Log.d("Agent", "Tool calling, $it")
+            _answer.value = ShowSuccessScreen(appLanguage = appLanguage)
+            return "Showing the success screen.".also {
+                printLog(message = it, answer = _answer.value.toString())
             }
-            return "Showing the success screen."
         }
 
         @Tool(description = "Show the failure screen, used when the Fibonacci calculation ran longer than the allowed time limit and was interrupted.")
         fun showFailureScreen(
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
-            _answer.value = ShowFailureScreen(appLanguage = appLanguage).also {
-                android.util.Log.d("Agent", "Tool calling, $it")
+            _answer.value = ShowFailureScreen(appLanguage = appLanguage)
+            return "Showing the failure screen.".also {
+                printLog(message = it, answer = _answer.value.toString())
             }
-            return "Showing the failure screen."
         }
     }
 }
