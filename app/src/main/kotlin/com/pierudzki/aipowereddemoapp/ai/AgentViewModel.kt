@@ -37,13 +37,8 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
         agent.close()
     }
 
-    // Serialization and drop-when-busy live in Agent; this is only the bridge to viewModelScope.
     fun onNewInputAction(action: Action) {
-        viewModelScope.launch {
-            if (!agent.onNewInputAction(action)) {
-                android.util.Log.d("AgentViewModel", "Dropped: ${action::class.simpleName}")
-            }
-        }
+        viewModelScope.launch { agent.onNewInputAction(action) }
     }
 
     // Text generation is not serialized with navigation (the Copywriter has one small lock per

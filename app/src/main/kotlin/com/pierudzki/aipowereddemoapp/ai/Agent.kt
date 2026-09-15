@@ -122,16 +122,17 @@ class Agent {
     /**
      * Runs one navigation turn for [action]. Turns are serialized through [navigationMutex]:
      * an action flagged [Action.isDroppableWhenBusy] is dropped instead of queued when another
-     * turn is in flight, every other action waits for its turn.
+     * turn is in flight, every other action waits for its turn. Once [close] has been called,
+     * every action is dropped as well.
      *
-     * Returns false when the action was dropped, either because the Agent was busy or because it
-     * has already been closed. The lock is taken before switching to Dispatchers.IO so the drop
-     * decision is made synchronously, in call order, on the caller's dispatcher.
+     * A dropped action is silently ignored: nothing is sent to the model and [answer] is left
+     * unchanged. The lock is taken before switching to Dispatchers.IO so the drop decision is
+     * made synchronously, in call order, on the caller's dispatcher.
      */
-    suspend fun onNewInputAction(action: Action): Boolean {
-        if (closed) return false
+    suspend fun onNewInputAction(action: Action) {
+        if (closed) return
         if (action.isDroppableWhenBusy) {
-            if (!navigationMutex.tryLock()) return false
+            if (!navigationMutex.tryLock()) return
             try {
                 navigate(action)
             } finally {
@@ -140,7 +141,6 @@ class Agent {
         } else {
             navigationMutex.withLock { navigate(action) }
         }
-        return true
     }
 
     private suspend fun navigate(action: Action) = withContext(Dispatchers.IO) {
