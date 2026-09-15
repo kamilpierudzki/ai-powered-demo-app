@@ -49,7 +49,7 @@ The app is built around a simple, repeating loop: a user interaction becomes an 
 
 ```mermaid
 flowchart TD
-    UI["Compose UI (AgentDrivenApp)"] -->|"user interaction"| Action["Action (natural-language prompt)"]
+    UI["Compose UI (AgentDrivenApp)"] -->|"user interaction"| Action["Action (natural-language message)"]
     Action --> VM["AgentViewModel"]
     VM --> Agent["Agent (Mutex-serialized)"]
     Agent -->|"NavigationPrompt + message"| LLM["On-device LLM (LiteRT-LM engine)"]
@@ -73,7 +73,7 @@ flowchart TD
 
 ### Actions (input)
 
-Every interaction implements the `Action` interface ([Action.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/action/Action.kt)) and carries a `prompt` describing what happened in plain English:
+Every interaction implements the `Action` interface ([Action.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/action/Action.kt)) and carries a `message` describing what happened in plain English:
 
 - `UserPressedStartButton` — the Start button on Welcome was tapped.
 - `UserChangedAppLanguage(newLanguage)` — the language was changed on Params.
@@ -122,7 +122,7 @@ app/src/main/kotlin/com/pierudzki/aipowereddemoapp/
 │   ├── EngineHolder.kt          # Holds the LiteRT-LM engine; lifecycle and state
 │   ├── Copywriter.kt            # Localized per-screen texts (high temp): one short conversation per screen visit, no cache
 │   ├── ModelConfig.kt           # Model file name and on-device path
-│   ├── action/                  # User/system interactions (Action prompts)
+│   ├── action/                  # User/system interactions (Action messages)
 │   ├── answer/                  # Sealed Answer types; each renders its own screen
 │   └── prompt/                  # NavigationPrompt + CopywritingPrompts
 └── core/                        # Compose UI: screens, ViewModel, texts, theme

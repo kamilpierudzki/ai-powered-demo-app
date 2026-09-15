@@ -151,7 +151,7 @@ class Agent {
                 resetNavigationConversation()
             }
             val conversation = ensureNavigationConversation(activeEngine)
-            val message = "Current screen: ${_answer.value.destination.id}.\n${action.prompt}"
+            val message = "Current screen: ${_answer.value.destination.id}.\n${action.message}"
             android.util.Log.d("Agent", "Action: message: $message")
             val response = conversation.sendMessage(message)
             android.util.Log.d("Agent", "Action response: $response")
@@ -171,7 +171,7 @@ class Agent {
         return engine.createConversation(
             ConversationConfig(
                 systemInstruction = Contents.of(
-                    NavigationPrompt.build(calculationTimeLimitSeconds = CALCULATION_TIME_LIMIT_SECONDS)
+                    NavigationPrompt.withTimeLimit(CALCULATION_TIME_LIMIT_SECONDS)
                 ),
                 tools = listOf(navigationToolProvider),
                 automaticToolCalling = true,
