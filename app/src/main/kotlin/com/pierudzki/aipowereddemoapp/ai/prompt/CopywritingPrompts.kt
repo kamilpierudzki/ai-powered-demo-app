@@ -1,8 +1,13 @@
 package com.pierudzki.aipowereddemoapp.ai.prompt
 
-object ScreenTextsPrompts {
+/**
+ * The Copywriter's prompts: one system instruction per screen, handed to a fresh single-turn
+ * conversation. The model writes the copy from them; the user turn that triggers it is the
+ * constant `REQUEST_MESSAGE` in [com.pierudzki.aipowereddemoapp.ai.Copywriter].
+ */
+object CopywritingPrompts {
 
-    fun paramsTexts(appLanguage: String): String =
+    fun paramsScreen(appLanguage: String): String =
         """
         You manage an Android mobile app. Suggest text for elements on the app screen.
         The screen contains two text fields. The first text field accepts the name of 
@@ -33,7 +38,7 @@ object ScreenTextsPrompts {
         {"title":"...","languageHint":"...","changeLanguageButton":"...","nHint":"...","saveNButton":"..."}
         """.trimIndent()
 
-    fun calculationTexts(appLanguage: String): String =
+    fun calculationScreen(appLanguage: String): String =
         """
         You manage an Android mobile app. Suggest text for the screen shown while the app is
         calculating the Fibonacci sequence.
@@ -54,7 +59,7 @@ object ScreenTextsPrompts {
         {"title":"...","message":"..."}
         """.trimIndent()
 
-    fun successTexts(appLanguage: String): String =
+    fun successScreen(appLanguage: String): String =
         """
         You manage an Android mobile app. Suggest text for the success screen shown after the
         Fibonacci calculation finished within the allowed time limit.
@@ -75,7 +80,7 @@ object ScreenTextsPrompts {
         {"title":"...","message":"..."}
         """.trimIndent()
 
-    fun failureTexts(appLanguage: String): String =
+    fun failureScreen(appLanguage: String): String =
         """
         You manage an Android mobile app. Suggest text for the failure screen shown when the
         Fibonacci calculation took too long and had to be interrupted.

@@ -56,7 +56,7 @@ flowchart TD
     LLM -->|"tool call"| Agent
     Agent -->|"Answer (StateFlow)"| UI
     Agent --> Copywriter["Copywriter (creative, per screen)"]
-    Copywriter -->|"ScreenTextsPrompts"| LLM
+    Copywriter -->|"CopywritingPrompts"| LLM
     LLM -->|"localized UI texts (JSON)"| Copywriter
     Copywriter -->|"*ScreenTexts (StateFlow, via Agent)"| UI
 ```
@@ -66,7 +66,7 @@ flowchart TD
 | Component | File | Responsibility |
 | --- | --- | --- |
 | `Agent` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Agent.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Agent.kt) | Keeps a navigation conversation that is reused within a calculation run but recreated at the start of each new run (so stale timing history can't skew the limit decision); `appLanguage` and `n` live in the model's own context within a run and are re-seeded via `UserFinishedSettingUpParams` when a new run begins. Turns actions into messages, lets the model navigate by calling tools, and generates per-screen texts through the `Copywriter` it owns (the model's second personality), which it also closes. Serializes navigation turns with a `Mutex` it owns, drops actions flagged `isDroppableWhenBusy` while a turn is in flight, and closes the conversation and the engine under the same lock once in-flight text generations have finished. Exposes everything as `StateFlow`. |
-| `Copywriter` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Copywriter.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Copywriter.kt) | The model's second personality, owned by the `Agent`. For each of the params, calculation, success and failure screens it opens a short single-turn, tool-less conversation whose system instruction is that screen's prompt (`ScreenTextsPrompts`) at `temperature = 1.0`, parses the JSON reply leniently and publishes typed `*ScreenTexts` via one `StateFlow` per screen. Generates the texts anew every time a screen is shown or re-created — nothing is cached, on purpose, so the same screen in the same language reads slightly differently on each visit and the model's creativity stays visible; while it writes, the screen shows "Loading..." placeholders. Shows an explicit "Text generation failed" placeholder when a reply is unusable, serializes requests per screen with its own `Mutex` (so the last requested language always ends up on screen), and is cancelled and awaited by `Agent.close()`. |
+| `Copywriter` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Copywriter.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/Copywriter.kt) | The model's second personality, owned by the `Agent`. For each of the params, calculation, success and failure screens it opens a short single-turn, tool-less conversation whose system instruction is that screen's prompt (`CopywritingPrompts`) at `temperature = 1.0`, parses the JSON reply leniently and publishes typed `*ScreenTexts` via one `StateFlow` per screen. Generates the texts anew every time a screen is shown or re-created — nothing is cached, on purpose, so the same screen in the same language reads slightly differently on each visit and the model's creativity stays visible; while it writes, the screen shows "Loading..." placeholders. Shows an explicit "Text generation failed" placeholder when a reply is unusable, serializes requests per screen with its own `Mutex` (so the last requested language always ends up on screen), and is cancelled and awaited by `Agent.close()`. |
 | `EngineHolder` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/EngineHolder.kt) | Holds the single LiteRT-LM `Engine` instance: creates and initializes it (model file check, `EngineConfig`, GPU backend), closes it, and exposes `EngineState` (`Initializing` / `Ready` / `Error`). |
 | `AgentViewModel` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/AgentViewModel.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/AgentViewModel.kt) | `AndroidViewModel` that is pure lifecycle glue: owns the coroutine scope, initializes the engine, closes the Agent in `onCleared()`, forwards actions to the Agent and maps `EngineState` to the Welcome screen UI state. |
 | `AgentDrivenApp` | [app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/AgentDrivenApp.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/AgentDrivenApp.kt) | Collects the current `Answer` and delegates rendering to it via `answer.Content(agentViewModel)` — no `when`/branching. Each `Answer` renders its own screen. |
@@ -91,7 +91,7 @@ Each `Answer` renders its own screen. The interface declares a single `@Composab
 ### Prompts
 
 - [NavigationPrompt.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/prompt/NavigationPrompt.kt) — the system instruction for navigation. It lists the available screens and their tools, tells the model to remember `n` and `appLanguage` across the conversation (defaulting to `10` and `English`), explains that every message is prefixed with the current screen, and states the time limit. The model navigates by calling exactly one tool — no text or JSON — with one exception: on the calculation screen while still within the time limit it replies with the single word `WAIT` instead of calling a tool, so the screen is not needlessly re-issued every tick.
-- [ScreenTextsPrompts.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/prompt/ScreenTextsPrompts.kt) — one prompt per screen, used by the `Copywriter` as the system instruction of a fresh single-turn conversation: what the screen does, which texts it needs and their length limits, the requested language, and an instruction to answer with a single minified JSON object using fixed keys.
+- [CopywritingPrompts.kt](app/src/main/kotlin/com/pierudzki/aipowereddemoapp/ai/prompt/CopywritingPrompts.kt) — one copywriting prompt per screen, used by the `Copywriter` as the system instruction of a fresh single-turn conversation: what the screen does, which texts it needs and their length limits, the requested language, and an instruction to answer with a single minified JSON object using fixed keys.
 
 ---
 
@@ -124,7 +124,7 @@ app/src/main/kotlin/com/pierudzki/aipowereddemoapp/
 │   ├── ModelConfig.kt           # Model file name and on-device path
 │   ├── action/                  # User/system interactions (Action prompts)
 │   ├── answer/                  # Sealed Answer types; each renders its own screen
-│   └── prompt/                  # NavigationPrompt + ScreenTextsPrompts
+│   └── prompt/                  # NavigationPrompt + CopywritingPrompts
 └── core/                        # Compose UI: screens, ViewModel, texts, theme
     ├── MainActivity.kt
     ├── AppDestination.kt         # Screen catalog (enum: id + description)

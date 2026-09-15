@@ -6,7 +6,7 @@ import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
 import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.SamplerConfig
-import com.pierudzki.aipowereddemoapp.ai.prompt.ScreenTextsPrompts
+import com.pierudzki.aipowereddemoapp.ai.prompt.CopywritingPrompts
 import com.pierudzki.aipowereddemoapp.core.AppDestination
 import com.pierudzki.aipowereddemoapp.core.CalculationScreenTexts
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreenTexts
@@ -26,7 +26,7 @@ import org.json.JSONObject
  * Kotlin harness that asks for it: the same on-device model that navigates the app is asked here,
  * at `temperature = 1.0` and without tools, to write one screen's texts (title, hints, buttons,
  * message) in the language the user typed. Every request is a fresh single-turn conversation whose
- * system instruction is that screen's prompt from [ScreenTextsPrompts]; the reply is a minified
+ * system instruction is that screen's prompt from [CopywritingPrompts]; the reply is a minified
  * JSON object.
  *
  * Parsing is lenient on purpose: LiteRT-LM 0.13.1 has no constrained-decoding / response-format
@@ -71,7 +71,7 @@ class Copywriter(
         screen = AppDestination.PARAMS,
         initial = PARAMS_LOADING,
         fallback = PARAMS_FALLBACK,
-        prompt = ScreenTextsPrompts::paramsTexts,
+        prompt = CopywritingPrompts::paramsScreen,
     ) { json ->
         ParamsSettingScreenTexts(
             languageHint = json.stringOr("languageHint"),
@@ -87,7 +87,7 @@ class Copywriter(
         screen = AppDestination.CALCULATION,
         initial = CALCULATION_LOADING,
         fallback = CALCULATION_FALLBACK,
-        prompt = ScreenTextsPrompts::calculationTexts,
+        prompt = CopywritingPrompts::calculationScreen,
     ) { json ->
         CalculationScreenTexts(
             title = json.stringOr("title"),
@@ -99,7 +99,7 @@ class Copywriter(
         screen = AppDestination.SUCCESS,
         initial = RESULT_LOADING,
         fallback = RESULT_FALLBACK,
-        prompt = ScreenTextsPrompts::successTexts,
+        prompt = CopywritingPrompts::successScreen,
         parse = ::parseResultTexts,
     )
 
@@ -107,7 +107,7 @@ class Copywriter(
         screen = AppDestination.FAILURE,
         initial = RESULT_LOADING,
         fallback = RESULT_FALLBACK,
-        prompt = ScreenTextsPrompts::failureTexts,
+        prompt = CopywritingPrompts::failureScreen,
         parse = ::parseResultTexts,
     )
 
