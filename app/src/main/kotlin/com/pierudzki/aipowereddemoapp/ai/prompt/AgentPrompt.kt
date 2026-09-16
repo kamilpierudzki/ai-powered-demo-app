@@ -1,13 +1,13 @@
 package com.pierudzki.aipowereddemoapp.ai.prompt
 
 /**
- * The Agent's navigation prompt: the system instruction of the long-lived, tool-calling navigation
+ * The Agent's prompt: the system instruction of the long-lived, tool-calling navigation
  * conversation in [com.pierudzki.aipowereddemoapp.ai.Agent], built anew each time that conversation
  * is created (once per calculation run) with the hard time limit interpolated, because no later
  * message repeats it. The per-turn user message is
  * [com.pierudzki.aipowereddemoapp.ai.action.Action.message], prefixed with the current screen.
  */
-object NavigationPrompt {
+object AgentPrompt {
 
     fun withTimeLimit(
         calculationTimeLimitSeconds: Int,

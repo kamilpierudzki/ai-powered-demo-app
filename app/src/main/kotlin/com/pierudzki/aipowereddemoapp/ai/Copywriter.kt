@@ -181,7 +181,7 @@ class Copywriter(
         // inside the try, so the catch below can never swallow a kotlinx CancellationException.
         // (If a suspend call is ever added here, rethrow CancellationException before the generic catch.)
         private fun askModel(language: String): T? {
-            val tag = "${screen.id}($language)"
+            val tag = "${screen.id}(language=\"$language\")"
             val activeEngine = engineHolder.engine ?: run {
                 android.util.Log.d(TAG, "$tag: engine not available, using fallback")
                 return null

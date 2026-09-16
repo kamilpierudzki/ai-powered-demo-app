@@ -18,7 +18,7 @@ import com.pierudzki.aipowereddemoapp.ai.answer.ShowFailureScreen
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowParamsSettingScreen
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowSuccessScreen
 import com.pierudzki.aipowereddemoapp.ai.answer.ShowWelcomeScreen
-import com.pierudzki.aipowereddemoapp.ai.prompt.NavigationPrompt
+import com.pierudzki.aipowereddemoapp.ai.prompt.AgentPrompt
 import com.pierudzki.aipowereddemoapp.core.CalculationScreenTexts
 import com.pierudzki.aipowereddemoapp.core.ParamsSettingScreenTexts
 import com.pierudzki.aipowereddemoapp.core.ResultScreenTexts
@@ -172,7 +172,7 @@ class Agent {
         return engine.createConversation(
             ConversationConfig(
                 systemInstruction = Contents.of(
-                    NavigationPrompt.withTimeLimit(CALCULATION_TIME_LIMIT_SECONDS)
+                    AgentPrompt.withTimeLimit(CALCULATION_TIME_LIMIT_SECONDS)
                 ),
                 tools = listOf(navigationToolProvider),
                 automaticToolCalling = true,
