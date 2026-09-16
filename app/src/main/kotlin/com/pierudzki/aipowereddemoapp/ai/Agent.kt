@@ -151,13 +151,13 @@ class Agent {
             }
             val conversation = ensureNavigationConversation(activeEngine)
             val message = "Current screen: ${_answer.value.destination.id}. ${action.message}"
-            android.util.Log.d("Agent", "message=\"$message\"")
+            android.util.Log.d("Agent", "USER message=\"$message\"")
             val response = conversation.sendMessage(message)
             if (response.toString().isNotEmpty()) {
-                android.util.Log.d("Agent", "agent response=\"$response\"")
+                android.util.Log.d("Agent", "AGENT response=\"$response\"")
             }
         } catch (e: Exception) {
-            android.util.Log.d("Agent", "error message=\"${e.message}\"")
+            android.util.Log.d("Agent", "AGENT error=\"${e.message}\"")
         }
     }
 
@@ -193,13 +193,13 @@ class Agent {
     private inner class NavigationTools : ToolSet {
 
         private fun printLog(message: String, answer: String) {
-            android.util.Log.d("Agent", "Tool calling, $message ($answer)")
+            android.util.Log.d("Agent", "Agent calls a tool=\"$message\" ($answer)")
         }
 
         @Tool(description = "Show the welcome screen with the button that starts the app.")
         fun showWelcomeScreen(): String {
             _answer.value = ShowWelcomeScreen
-            return "Showing the welcome screen.".also {
+            return "Show the welcome screen.".also {
                 printLog(message = it, answer = _answer.value.toString())
             }
         }
@@ -210,7 +210,7 @@ class Agent {
             @ToolParam(description = "The current or updated app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowParamsSettingScreen(n = n, appLanguage = appLanguage)
-            return "Showing the parameters screen.".also {
+            return "Show the parameters screen.".also {
                 printLog(message = it, answer = _answer.value.toString())
             }
         }
@@ -221,7 +221,7 @@ class Agent {
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowCalculationScreen(n = n, appLanguage = appLanguage)
-            return "Showing the calculation screen.".also {
+            return "Show the calculation screen.".also {
                 printLog(message = it, answer = _answer.value.toString())
             }
         }
@@ -231,7 +231,7 @@ class Agent {
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowSuccessScreen(appLanguage = appLanguage)
-            return "Showing the success screen.".also {
+            return "Show the success screen.".also {
                 printLog(message = it, answer = _answer.value.toString())
             }
         }
@@ -241,7 +241,7 @@ class Agent {
             @ToolParam(description = "The current app language, for example English or Polish.") appLanguage: String,
         ): String {
             _answer.value = ShowFailureScreen(appLanguage = appLanguage)
-            return "Showing the failure screen.".also {
+            return "Show the failure screen.".also {
                 printLog(message = it, answer = _answer.value.toString())
             }
         }

@@ -197,7 +197,7 @@ class Copywriter(
                     synchronized(conversationLock) { inFlight = conversation }
                     try {
                         val raw = conversation.sendMessage(REQUEST_MESSAGE).text()
-                        android.util.Log.d(TAG, "$tag: response: $raw")
+                        android.util.Log.d(TAG, "$tag >>> $raw")
                         extractJsonObject(raw)?.let(parse) ?: run {
                             android.util.Log.d(TAG, "$tag: no JSON object in response, using fallback")
                             null

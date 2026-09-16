@@ -47,7 +47,7 @@ class EngineHolder {
             return@withContext
         }
         if (!isModelAvailable()) {
-            android.util.Log.d("EngineHolder", "initialize(...), Model not available")
+            android.util.Log.d("EngineHolder", "Model not available")
             _state.value = EngineState.Error(
                 message = "Model not available",
                 modelName = modelName(),
@@ -61,18 +61,18 @@ class EngineHolder {
             )
             try {
                 engine = Engine(config).also {
-                    android.util.Log.d("EngineHolder", "initialize(...), Initializing")
+                    android.util.Log.d("EngineHolder", "Initializing")
                     _state.value = EngineState.Initializing(
                         modelName = modelName(),
                     )
                     it.initialize()
-                    android.util.Log.d("EngineHolder", "initialize(...), Ready")
+                    android.util.Log.d("EngineHolder", "Ready")
                     _state.value = EngineState.Ready(
                         modelName = modelName(),
                     )
                 }
             } catch (e: Exception) {
-                android.util.Log.d("EngineHolder", "initialize(...), Error: ${e.message}")
+                android.util.Log.d("EngineHolder", "Error: ${e.message}")
                 _state.value = EngineState.Error(
                     message = "Initialization error: ${e.message}",
                     modelName = modelName(),
